@@ -35,6 +35,35 @@ export type Database = {
   }
   public: {
     Tables: {
+      images: {
+        Row: {
+          created_at: string
+          id: number
+          image: string
+          testing_center: number
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          image: string
+          testing_center: number
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          image?: string
+          testing_center?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "images_testing_center_fkey"
+            columns: ["testing_center"]
+            isOneToOne: false
+            referencedRelation: "testing_centers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       locations: {
         Row: {
           barangay: string
@@ -78,24 +107,24 @@ export type Database = {
       }
       open_hours: {
         Row: {
-          close_time: string
+          close_time: string | null
           day: Database["public"]["Enums"]["day_enum"]
           id: number
-          open_time: string
+          open_time: string | null
           testing_center: number
         }
         Insert: {
-          close_time: string
+          close_time?: string | null
           day: Database["public"]["Enums"]["day_enum"]
           id?: number
-          open_time: string
+          open_time?: string | null
           testing_center: number
         }
         Update: {
-          close_time?: string
+          close_time?: string | null
           day?: Database["public"]["Enums"]["day_enum"]
           id?: number
-          open_time?: string
+          open_time?: string | null
           testing_center?: number
         }
         Relationships: [
@@ -113,8 +142,8 @@ export type Database = {
           contact: number
           created_at: string
           facebook: string
+          google_map: string | null
           id: number
-          images: string[]
           name: string
           services: string
         }
@@ -122,8 +151,8 @@ export type Database = {
           contact: number
           created_at?: string
           facebook: string
+          google_map?: string | null
           id?: number
-          images: string[]
           name: string
           services: string
         }
@@ -131,8 +160,8 @@ export type Database = {
           contact?: number
           created_at?: string
           facebook?: string
+          google_map?: string | null
           id?: number
-          images?: string[]
           name?: string
           services?: string
         }

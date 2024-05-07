@@ -86,4 +86,12 @@
   input[type=number] {
     -moz-appearance: textfield;
   }
+
+  .no-outline {
+    @apply focus-visible:ring-0 focus-visible:ring-transparent focus-visible:ring-offset-0;
+  }
+
+  .no-scroll {
+    padding-right: 17px!important;
+  }
 }

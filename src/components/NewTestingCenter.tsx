@@ -12,7 +12,7 @@ import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { generateClientDropzoneAccept } from "uploadthing/client";
-import { set, z } from "zod";
+import { z } from "zod";
 
 interface LocationInterface {
   regions: {
@@ -63,13 +63,34 @@ import {
 } from "@/components/ui/select";
 
 import {
-  regions,
-  provinces,
-  regionByCode,
-  provincesByCode,
-  cities,
   barangays,
+  cities,
+  provinces,
+  provincesByCode,
+  regionByCode,
+  regions,
 } from "select-philippines-address";
+import { Separator } from "./ui/separator";
+
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import { Checkbox } from "@/components/ui/checkbox";
+import SelectTime from "./SelectTime";
+
+interface DaysType {
+  label: string;
+  checked: boolean;
+  open: string | null;
+  close: string | null;
+}
+
+const NUMBERS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 
 const NewTestingCenter = () => {
   const [locationData, setLocationData] = useState<LocationInterface>({
@@ -80,6 +101,52 @@ const NewTestingCenter = () => {
   });
 
   const [files, setFiles] = useState<File[]>([]);
+  const [daysValue, setDaysValue] = useState<DaysType[]>([
+    {
+      label: "monday",
+      checked: false,
+      open: null,
+      close: null,
+    },
+    {
+      label: "tuesday",
+      checked: false,
+      open: null,
+      close: null,
+    },
+    {
+      label: "wednesday",
+      checked: false,
+      open: null,
+      close: null,
+    },
+    {
+      label: "thursday",
+      checked: false,
+      open: null,
+      close: null,
+    },
+    {
+      label: "friday",
+      checked: false,
+      open: null,
+      close: null,
+    },
+    {
+      label: "saturday",
+      checked: false,
+      open: null,
+      close: null,
+    },
+    {
+      label: "sunday",
+      checked: false,
+      open: null,
+      close: null,
+    },
+  ]);
+  
+  const [previewImage, setPreviewImage] = useState("");
 
   const [imageError, setImageError] = useState(false);
 
@@ -93,10 +160,7 @@ const NewTestingCenter = () => {
     }
   }, []);
 
-  const {
-    // startUpload,
-    permittedFileInfo,
-  } = useUploadThing("imageUploader", {
+  const { startUpload, permittedFileInfo } = useUploadThing("imageUploader", {
     onClientUploadComplete: () => {
       console.log("Upload Success");
     },
@@ -119,6 +183,8 @@ const NewTestingCenter = () => {
     accept: fileTypes ? generateClientDropzoneAccept(fileTypes) : undefined,
   });
 
+  // await startUpload(files, { name: "image" })
+
   const formSchema = z.object({
     name: z.string().min(1),
     province: z.string().min(1),
@@ -134,6 +200,7 @@ const NewTestingCenter = () => {
     services: z.string().min(5),
     facebook: z.string().url(),
     contact: z.number().min(1),
+    google_map: z.string().url().nullish(),
   });
 
   type formType = z.infer<typeof formSchema>;
@@ -151,6 +218,7 @@ const NewTestingCenter = () => {
       services: "",
       facebook: "",
       contact: 0,
+      google_map: "",
     },
   });
 
@@ -164,338 +232,549 @@ const NewTestingCenter = () => {
   }, []);
 
   return (
-    <div className="flex-1 bg-white p-5">
-      <div className="mx-auto flex w-fit max-w-md flex-col justify-center ">
-        <h1 className="text-xl">Add new testing center</h1>
-        <p className="max-w-prose text-left text-sm opacity-50">
-          This testing center will be submitted for review. It might take some
-          time before it gets accepted.
-        </p>
+    <div className="relative mx-auto flex w-full max-w-screen-2xl flex-1 flex-col overflow">
+      <div className="sticky top-[5.8rem] z-10 w-full">
+        <div className="flex h-20 w-full items-center justify-between bg-white px-5 py-4">
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink href="/testing-center">
+                  Dashboard
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbPage>Add new center</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
 
-        <div className="mt-10 w-full text-left">
-          <Form {...form}>
-            <form
-              onSubmit={form.handleSubmit((data: formType) => {
-                console.log(data);
-              })}
-              className="space-y-4"
-            >
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Testing center name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Testing center" {...field} />
-                    </FormControl>
+          <Button
+            className="w-fu rounded-full hover:bg-blue"
+            disabled={!form.formState.isValid}
+            onClick={form.handleSubmit((data) => {
+              console.log(data);
+            })}
+          >
+            Submit for review
+          </Button>
+        </div>
+        <Separator />
+      </div>
 
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+      <div className="w-full flex-1 bg-white py-16">
+        <div className="mx-auto flex w-fit max-w-lg flex-col justify-center ">
+          <h1 className="text-xl">Add new testing center</h1>
+          <p className="max-w-prose text-left text-sm opacity-50">
+            This testing center will be submitted for review. It might take some
+            time before it gets accepted.
+          </p>
 
-              <FormField
-                control={form.control}
-                name="services"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Services</FormLabel>
-                    <FormControl>
-                      <Textarea placeholder="What do you offer?" {...field} />
-                    </FormControl>
+          <div className="mt-10 w-full text-left">
+            <Form {...form}>
+              <form className="space-y-6">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Testing center name</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Testing center"
+                          className=""
+                          {...field}
+                        />
+                      </FormControl>
 
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="">
-                <p className="text-sm opacity-50">
-                  Location of the testing center
-                </p>
-                <div className="mt-2 grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="region"
-                    render={({ field }) => (
-                      <FormItem className="w-full">
-                        <FormLabel>Region</FormLabel>
-                        <FormControl>
-                          <Select
-                            onValueChange={async (value) => {
-                              form.resetField("province");
-                              form.resetField("city");
-                              form.resetField("barangay");
-
-                              const { region_name } = await regionByCode(value);
-
-                              field.value = region_name;
-                              const provinceData = await provinces(value);
-
-                              setLocationData((prev) => ({
-                                ...prev,
-                                provinces: provinceData,
-                              }));
-                            }}
-                          >
-                            <SelectTrigger className="w-full ">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {locationData.regions.map((region) => (
-                                <SelectItem
-                                  value={region.region_code}
-                                  key={region.id}
-                                >
-                                  {region.region_name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </FormControl>
-
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="province"
-                    render={({ field }) => (
-                      <FormItem className="w-full">
-                        <FormLabel>Province</FormLabel>
-                        <FormControl>
-                          <Select
-                            onValueChange={async (value) => {
-                              form.resetField("city");
-                              form.resetField("barangay");
-
-                              const { province_name } =
-                                await provincesByCode(value);
-
-                              field.value = province_name;
-
-                              const cityData = await cities(value);
-
-                              setLocationData((prev) => ({
-                                ...prev,
-                                cities: cityData,
-                              }));
-                            }}
-                          >
-                            <SelectTrigger className="">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {locationData.provinces.map((province) => (
-                                <SelectItem
-                                  value={province.province_code}
-                                  key={province.province_code}
-                                >
-                                  {province.province_name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </FormControl>
-
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="city"
-                    render={({ field }) => (
-                      <FormItem className="w-full">
-                        <FormLabel>City / Municipality</FormLabel>
-                        <FormControl>
-                          <Select
-                            onValueChange={async (value) => {
-                              form.resetField("barangay");
-
-                              const barangayData = await barangays(value);
-
-                              setLocationData((prev) => ({
-                                ...prev,
-                                barangays: barangayData,
-                              }));
-                            }}
-                          >
-                            <SelectTrigger className="">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {locationData.cities.map((city) => (
-                                <SelectItem
-                                  value={city.city_code}
-                                  key={city.city_code}
-                                  onClick={() => {
-                                    field.value = city.city_name;
-                                  }}
-                                >
-                                  {city.city_name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </FormControl>
-
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="barangay"
-                    render={({ field }) => (
-                      <FormItem className="w-full">
-                        <FormLabel>Barangay</FormLabel>
-                        <FormControl>
-                          <Select>
-                            <SelectTrigger className="">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {locationData.barangays.map((barangay) => (
-                                <SelectItem
-                                  value={barangay.brgy_code}
-                                  key={barangay.brgy_code}
-                                  onClick={() => {
-                                    field.value = barangay.brgy_name;
-                                  }}
-                                >
-                                  {barangay.brgy_name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </FormControl>
-
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="zip"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>ZIP Code</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            maxLength={4}
-                            placeholder="0000"
-                            onInput={(e) =>
-                              (e.currentTarget.value =
-                                e.currentTarget.value.slice(0, 4))
-                            }
-                            {...field}
-                          />
-                        </FormControl>
-
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="contact"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Contact</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            maxLength={11}
-                            minLength={11}
-                            placeholder="0000"
-                            onInput={(e) =>
-                              (e.currentTarget.value =
-                                e.currentTarget.value.slice(0, 11))
-                            }
-                            {...field}
-                          />
-                          </FormControl>
-                        <FormDescription>
-                          11 digit mobile number
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </div>
-            </form>
-          </Form>
-
-          <div className="mt-4">
-            <h1 className="">Upload Images</h1>
-            <p
-              className={cn("text-sm opacity-50", {
-                "text-red-500 opacity-100": imageError,
-              })}
-            >
-              You must select 5 images
-            </p>
-            <div
-              {...getRootProps()}
-              className={cn(
-                "group relative mx-auto mt-3 h-36 w-full cursor-pointer bg-gray-100 p-3",
-                {
-                  "h-10 p-0": files.length >= 5,
-                },
-              )}
-            >
-              <div
-                className={cn(
-                  "flex h-full w-full items-center justify-center border-4 border-dashed border-black/10 transition-all duration-300 ease-in-out group-hover:border-black/50",
-                  {
-                    "border-0 ": files.length >= 5,
-                  },
-                )}
-              >
-                <input {...getInputProps()} multiple />
-
-                <div className="flex flex-col items-center space-y-2 opacity-50 transition-all duration-300 ease-in-out group-hover:opacity-100">
-                  {files.length > 0 ? (
-                    <p className="">Replace images</p>
-                  ) : (
-                    <>
-                      <Upload size={38} />
-                      <p className="text-sm">Drag and drop files here</p>
-                    </>
+                      <FormMessage />
+                    </FormItem>
                   )}
-                </div>
-              </div>
-            </div>
+                />
 
-            <div className="mx-auto mt-5 w-fit">
-              {files.length >= 5 && (
-                <div className="grid-cols grid grid-cols-3 gap-3">
-                  {files.map((file) => {
-                    const imageUrl = URL.createObjectURL(file);
-                    return (
-                      <Image
-                        key={file.name}
-                        src={imageUrl}
-                        alt={file.name}
-                        width={500}
-                        height={500}
-                        className="block h-32 w-32 border-2 border-black/10 object-cover"
-                      />
-                    );
-                  })}
+                <FormField
+                  control={form.control}
+                  name="services"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Services</FormLabel>
+                      <FormControl>
+                        <Textarea placeholder="What do you offer?" {...field} />
+                      </FormControl>
+
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="">
+                  <p className="text-sm opacity-50">
+                    Location of the testing center
+                  </p>
+                  <div className="mt-2 grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="region"
+                      render={({ field }) => (
+                        <FormItem className="w-full">
+                          <FormLabel>Region</FormLabel>
+                          <FormControl>
+                            <Select
+                              onValueChange={async (value) => {
+                                form.resetField("province");
+                                form.resetField("city");
+                                form.resetField("barangay");
+
+                                setLocationData((prev) => ({
+                                  ...prev,
+                                  provinces: [],
+                                  cities: [],
+                                  barangays: [],
+                                }));
+
+                                const { region_name } =
+                                  await regionByCode(value);
+
+                                field.value = region_name;
+                                const provinceData = await provinces(value);
+
+                                setLocationData((prev) => ({
+                                  ...prev,
+                                  provinces: provinceData,
+                                }));
+                              }}
+                            >
+                              <SelectTrigger className="w-full ">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {locationData.regions.map((region) => (
+                                  <SelectItem
+                                    value={region.region_code}
+                                    key={region.id}
+                                  >
+                                    {region.region_name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </FormControl>
+
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="province"
+                      render={({ field }) => (
+                        <FormItem className="w-full">
+                          <FormLabel>Province</FormLabel>
+                          <FormControl>
+                            <Select
+                              onValueChange={async (value) => {
+                                form.resetField("city");
+                                form.resetField("barangay");
+
+                                setLocationData((prev) => ({
+                                  ...prev,
+                                  cities: [],
+                                  barangays: [],
+                                }));
+
+                                const { province_name } =
+                                  await provincesByCode(value);
+
+                                field.value = province_name;
+
+                                const cityData = await cities(value);
+
+                                setLocationData((prev) => ({
+                                  ...prev,
+                                  cities: cityData,
+                                }));
+                              }}
+                            >
+                              <SelectTrigger className="">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {locationData.provinces.map((province) => (
+                                  <SelectItem
+                                    value={province.province_code}
+                                    key={province.province_code}
+                                  >
+                                    {province.province_name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </FormControl>
+
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="city"
+                      render={({ field }) => (
+                        <FormItem className="w-full">
+                          <FormLabel>City / Municipality</FormLabel>
+                          <FormControl>
+                            <Select
+                              onValueChange={async (value) => {
+                                form.resetField("barangay");
+
+                                setLocationData((prev) => ({
+                                  ...prev,
+                                  barangays: [],
+                                }));
+
+                                const barangayData = await barangays(value);
+
+                                setLocationData((prev) => ({
+                                  ...prev,
+                                  barangays: barangayData,
+                                }));
+                              }}
+                            >
+                              <SelectTrigger className="">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {locationData.cities.map((city) => (
+                                  <SelectItem
+                                    value={city.city_code}
+                                    key={city.city_code}
+                                    onClick={() => {
+                                      field.value = city.city_name;
+                                    }}
+                                  >
+                                    {city.city_name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </FormControl>
+
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="barangay"
+                      render={({ field }) => (
+                        <FormItem className="w-full">
+                          <FormLabel>Barangay</FormLabel>
+                          <FormControl>
+                            <Select>
+                              <SelectTrigger className="">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {locationData.barangays.map((barangay) => (
+                                  <SelectItem
+                                    value={barangay.brgy_code}
+                                    key={barangay.brgy_code}
+                                    onClick={() => {
+                                      field.value = barangay.brgy_name;
+                                    }}
+                                  >
+                                    {barangay.brgy_name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </FormControl>
+
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="zip"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>ZIP Code</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              maxLength={4}
+                              placeholder="0000"
+                              onInput={(e) =>
+                                (e.currentTarget.value =
+                                  e.currentTarget.value.slice(0, 4))
+                              }
+                              {...field}
+                            />
+                          </FormControl>
+
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="contact"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Contact</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              maxLength={11}
+                              minLength={11}
+                              placeholder="0000"
+                              onInput={(e) =>
+                                (e.currentTarget.value =
+                                  e.currentTarget.value.slice(0, 11))
+                              }
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            11 digit mobile number
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 </div>
-              )}
-            </div>
+
+                <FormField
+                  control={form.control}
+                  name="landmark"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Landmark</FormLabel>
+                      <FormControl>
+                        <Textarea placeholder="" {...field} />
+                      </FormControl>
+                      <FormDescription>
+                        Nearest landmark within the area
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="">
+                  <h1 className="">Upload Images</h1>
+                  <p
+                    className={cn("text-sm opacity-50", {
+                      "text-red-500 opacity-100": imageError,
+                    })}
+                  >
+                    You must select 5 images
+                  </p>
+                  <div
+                    {...getRootProps()}
+                    className={cn(
+                      "group relative mx-auto mt-3 h-36 w-full cursor-pointer bg-gray-100 p-3",
+                      {
+                        "h-10 p-0": files.length >= 5,
+                      },
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        "flex h-full w-full items-center justify-center border-4 border-dashed border-black/10 transition-all duration-300 ease-in-out group-hover:border-black/50",
+                        {
+                          "border-0 ": files.length >= 5,
+                        },
+                      )}
+                    >
+                      <input {...getInputProps()} multiple />
+
+                      <div className="flex flex-col items-center space-y-2 opacity-50 transition-all duration-300 ease-in-out group-hover:opacity-100">
+                        {files.length > 0 ? (
+                          <p className="">Replace images</p>
+                        ) : (
+                          <>
+                            <Upload size={38} />
+                            <p className="text-sm">Drag and drop files here</p>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mx-auto mt-5 w-fit">
+                    {files.length >= 5 && (
+                      <div className="grid-cols grid grid-cols-5 gap-3">
+                        {files.map((file) => {
+                          const imageUrl = URL.createObjectURL(file);
+                          return (
+                            <Image
+                              key={file.name}
+                              src={imageUrl}
+                              alt={file.name}
+                              width={500}
+                              height={500}
+                              className="block h-24 w-24 border-2 border-black/10 object-cover"
+                            />
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="facebook"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Facebook link</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="url"
+                          placeholder="https://www.facebook.com/ctrl/"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        This will serve as your official page
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="google_map"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Google Map Link</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="url"
+                          placeholder="Optional"
+                          {...field}
+                          value={field.value ?? ""}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        This will help users find your location.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="space-y-2">
+                  <div className="mb-3">
+                    <h1 className="">Open hours</h1>
+                    <p className="text-sm opacity-50">
+                      Unchecked days will be automatically marked as closed.
+                    </p>
+                  </div>
+
+                  {daysValue.map((item) => (
+                    <div key={item.label} className="w-full">
+                      <div className="flex gap-2">
+                        <div className="flex w-full items-center gap-2">
+                          <h1 className="flex w-full items-center gap-2 capitalize">
+                            <Checkbox
+                              onCheckedChange={(e) => {
+                                if (e) {
+                                  setDaysValue((prev) =>
+                                    prev.map((day) => {
+                                      if (day.label === item.label) {
+                                        return {
+                                          ...day,
+                                          checked: true,
+                                          open: "8 AM",
+                                          close: "5 PM",
+                                        };
+                                      }
+                                      return day;
+                                    }),
+                                  );
+                                } else {
+                                  setDaysValue((prev) =>
+                                    prev.map((day) => {
+                                      if (day.label === item.label) {
+                                        return {
+                                          ...day,
+                                          checked: false,
+                                          open: null,
+                                          close: null,
+                                        };
+                                      }
+                                      return day;
+                                    }),
+                                  );
+                                }
+                              }}
+                            />
+                            <p
+                              className={cn("", {
+                                "opacity-40": !item.checked,
+                              })}
+                            >
+                              {item.label}
+                            </p>
+                          </h1>
+
+                          <SelectTime type="open" disabled={item.checked} />  
+                          <SelectTime type="close" disabled={item.checked} />
+
+                          {/* <Select
+                            disabled={!item.checked}
+                            value={item.close ?? undefined}
+                            onValueChange={(e) => {
+                              setDaysValue((prev) =>
+                                prev.map((day) => {
+                                  if (day.label === item.label) {
+                                    return { ...day, close: e };
+                                  }
+
+                                  return day;
+                                }),
+                              );
+                            }}
+                          >
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Close time" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {Array.from({ length: 12 }).map((_, index) => (
+                                <SelectItem
+                                  key={`${index + 1} AM`}
+                                  value={`${index + 1} AM`}
+                                >
+                                  {index + 1} AM
+                                </SelectItem>
+                              ))}
+
+                              {Array.from({ length: 12 }).map((_, index) => (
+                                <SelectItem
+                                  key={`${index + 1} PM`}
+                                  value={`${index + 1} PM`}
+                                >
+                                  {index + 1} PM
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select> */}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </form>
+            </Form>
           </div>
         </div>
       </div>

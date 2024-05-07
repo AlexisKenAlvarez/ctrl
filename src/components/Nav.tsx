@@ -27,7 +27,7 @@ const Nav = ({
   return (
     <nav className="sticky left-0 top-0 w-full mx-auto bg-white z-50">
       <nav className="mx-auto w-full p-5">
-        <div className="mx-auto flex max-w-screen-2xl items-center justify-between">
+        <div className="mx-auto flex max-w-screen-2xl items-center justify-between px-5">
           <Image
             alt="Logo"
             width={500}
@@ -74,7 +74,7 @@ const Nav = ({
           )}
         </div>
       </nav>
-      <Separator className="h-1 opacity-30" />
+      <Separator className="" />
     </nav>
   );
 };
