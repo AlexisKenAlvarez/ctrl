@@ -35,45 +35,135 @@ export type Database = {
   }
   public: {
     Tables: {
-      general_admin: {
+      images: {
         Row: {
           created_at: string
-          email: string
-          full_name: string
-          id: string
+          id: number
+          image: string
+          testing_center: number
         }
         Insert: {
           created_at?: string
-          email: string
-          full_name: string
-          id?: string
+          id?: number
+          image: string
+          testing_center: number
         }
         Update: {
           created_at?: string
-          email?: string
-          full_name?: string
-          id?: string
+          id?: number
+          image?: string
+          testing_center?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "images_testing_center_fkey"
+            columns: ["testing_center"]
+            isOneToOne: false
+            referencedRelation: "testing_centers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
-      normal_admin: {
+      locations: {
         Row: {
-          created_at: string
-          email: string
-          full_name: string
-          id: string
+          barangay: string
+          city: string
+          id: number
+          landmark: string
+          province: string
+          region: string
+          testing_center: number
+          zip: number
         }
         Insert: {
-          created_at?: string
-          email: string
-          full_name: string
-          id?: string
+          barangay: string
+          city: string
+          id?: number
+          landmark: string
+          province: string
+          region: string
+          testing_center: number
+          zip: number
         }
         Update: {
+          barangay?: string
+          city?: string
+          id?: number
+          landmark?: string
+          province?: string
+          region?: string
+          testing_center?: number
+          zip?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "location_testing_center_fkey"
+            columns: ["testing_center"]
+            isOneToOne: false
+            referencedRelation: "testing_centers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      open_hours: {
+        Row: {
+          close_time: string | null
+          day: Database["public"]["Enums"]["day_enum"]
+          id: number
+          open_time: string | null
+          testing_center: number
+        }
+        Insert: {
+          close_time?: string | null
+          day: Database["public"]["Enums"]["day_enum"]
+          id?: number
+          open_time?: string | null
+          testing_center: number
+        }
+        Update: {
+          close_time?: string | null
+          day?: Database["public"]["Enums"]["day_enum"]
+          id?: number
+          open_time?: string | null
+          testing_center?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "open_hours_testing_center_fkey"
+            columns: ["testing_center"]
+            isOneToOne: false
+            referencedRelation: "testing_centers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      testing_centers: {
+        Row: {
+          contact: number
+          created_at: string
+          facebook: string
+          google_map: string | null
+          id: number
+          name: string
+          services: string
+        }
+        Insert: {
+          contact: number
           created_at?: string
-          email?: string
-          full_name?: string
-          id?: string
+          facebook: string
+          google_map?: string | null
+          id?: number
+          name: string
+          services: string
+        }
+        Update: {
+          contact?: number
+          created_at?: string
+          facebook?: string
+          google_map?: string | null
+          id?: number
+          name?: string
+          services?: string
         }
         Relationships: []
       }
@@ -109,6 +199,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
+      day_enum: "monday" | "tuesday" | "wednesday" | "thursday" | "friday"
       user_role_enum: "user" | "testing_center" | "admin"
     }
     CompositeTypes: {
