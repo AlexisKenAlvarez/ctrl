@@ -6,6 +6,7 @@ import { createTRPCReact } from "@trpc/react-query";
 import { type inferRouterInputs, type inferRouterOutputs } from "@trpc/server";
 import { useState } from "react";
 import SuperJSON from "superjson";
+import { AppProgressBar as ProgressBar } from "next-nprogress-bar";
 
 import { type AppRouter } from "@/server/api/root";
 
@@ -63,6 +64,12 @@ export function TRPCReactProvider(props: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <ProgressBar
+        height="4px"
+        color="#43A6F6"
+        options={{ showSpinner: false }}
+        shallowRouting
+      />
       <api.Provider client={trpcClient} queryClient={queryClient}>
         {props.children}
       </api.Provider>

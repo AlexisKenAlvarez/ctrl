@@ -15,6 +15,7 @@ import {
 import { supabase } from "supabase/supabaseClient";
 import { useRouter } from "next/navigation";
 import { Separator } from "./ui/separator";
+import Link from "next/link";
 
 const Nav = ({
   isLoggedIn,
@@ -25,16 +26,19 @@ const Nav = ({
 }) => {
   const router = useRouter();
   return (
-    <nav className="sticky left-0 top-0 w-full mx-auto bg-white z-50">
+    <nav className="sticky left-0 top-0 z-50 mx-auto w-full bg-white">
       <nav className="mx-auto w-full p-5">
-        <div className="mx-auto flex max-w-screen-2xl items-center justify-between px-5">
-          <Image
-            alt="Logo"
-            width={500}
-            height={500}
-            src="/logo.webp"
-            className="w-44"
-          />
+        <div className="mx-auto flex items-center justify-between px-5">
+          <Link href="/">
+            <Image
+              alt="Logo"
+              width={500}
+              height={500}
+              src="/logo.webp"
+              className="w-44"
+            />
+          </Link>
+
           {isLoggedIn ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -47,10 +51,8 @@ const Nav = ({
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 {role === "testing_center" && (
-                  <DropdownMenuItem
-                    onClick={() => router.push("/testing-center")}
-                  >
-                    Dashboard
+                  <DropdownMenuItem asChild>
+                    <Link href="/testing-center">Dashboard</Link>
                   </DropdownMenuItem>
                 )}
 
