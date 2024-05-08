@@ -9,10 +9,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useDropzone } from "@uploadthing/react";
 import { Upload } from "lucide-react";
 import Image from "next/image";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { generateClientDropzoneAccept } from "uploadthing/client";
-import { z } from "zod";
+import { set, z } from "zod";
 
 interface LocationInterface {
   regions: {
@@ -82,7 +82,7 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Checkbox } from "@/components/ui/checkbox";
 import SelectTime from "./SelectTime";
-import LocationForm from "./LocationForm";
+import { api } from "@/trpc/react";
 
 interface DaysType {
   label: string;
@@ -91,7 +91,13 @@ interface DaysType {
   close: string | null;
 }
 
+interface ImagesType {
+  url: string;
+  name: string;
+}
+
 const NewTestingCenter = () => {
+  const uploadTestingCenterMutation = api.user.addTestingCenter.useMutation();
   const [locationData, setLocationData] = useState<LocationInterface>({
     regions: [],
     provinces: [],
@@ -101,6 +107,9 @@ const NewTestingCenter = () => {
 
   const [page, setPage] = useState<"basic" | "location">("basic");
   const [files, setFiles] = useState<File[]>([]);
+  const [images, setImages] = useState<ImagesType[]>([]);
+  const [debounce, setDebounce] = useState(false);
+
   const [daysValue, setDaysValue] = useState<DaysType[]>([
     {
       label: "monday",
@@ -161,12 +170,19 @@ const NewTestingCenter = () => {
     },
     [],
   );
-  const [previewImage, setPreviewImage] = useState("");
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   const [imageError, setImageError] = useState(false);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
+    setImages([]);
     if (acceptedFiles.length === 5) {
+      acceptedFiles.forEach((file) => {
+        const imageUrl = URL.createObjectURL(file);
+
+        setImages((prev) => [...prev, { url: imageUrl, name: file.name }]);
+      });
+
       setImageError(false);
       setFiles(acceptedFiles);
     } else {
@@ -198,24 +214,18 @@ const NewTestingCenter = () => {
     accept: fileTypes ? generateClientDropzoneAccept(fileTypes) : undefined,
   });
 
-  // await startUpload(files, { name: "image" })
-
   const formSchema = z.object({
     name: z.string().min(1),
     province: z.string().min(1),
     city: z.string().min(1),
     region: z.string().min(1),
     barangay: z.string().min(1),
-    zip: z
-      .number()
-      .int()
-      .gte(1000, { message: "Must be 4 digits" })
-      .lte(9999, { message: "Must be 4 digits" }),
+    zip: z.string().max(4).min(4),
     landmark: z.string().min(1),
     services: z.string().min(5),
     facebook: z.string().url(),
-    contact: z.number().min(1),
-    google_map: z.string().url().nullish(),
+    contact: z.string().min(1).max(11),
+    google_map: z.string().nullish(),
   });
 
   type formType = z.infer<typeof formSchema>;
@@ -225,15 +235,15 @@ const NewTestingCenter = () => {
     defaultValues: {
       name: "",
       region: "",
-      province: "",
+      province: undefined,
       city: "",
       barangay: "",
-      zip: 0,
+      zip: "",
       landmark: "",
       services: "",
       facebook: "",
-      contact: 0,
-      google_map: "",
+      contact: "",
+      google_map: null,
     },
   });
 
@@ -265,13 +275,37 @@ const NewTestingCenter = () => {
           </Breadcrumb>
 
           <Button
-            className="w-fu rounded-full hover:bg-blue"
-            disabled={!form.formState.isValid}
-            onClick={form.handleSubmit((data) => {
-              console.log(data);
+            className={cn(
+              "w-fu pointer-events-auto rounded-full hover:bg-blue",
+              {
+                "pointer-events-none": debounce,
+              },
+            )}
+            disabled={!form.formState.isValid || files.length !== 5}
+            onClick={form.handleSubmit(async (data) => {
+              setDebounce(true);
+              try {
+                const uploadData =
+                  await uploadTestingCenterMutation.mutateAsync({
+                    ...data,
+                    open_hours: daysValue,
+                  });
+
+                const postId = uploadData.id;
+                await startUpload(files, {
+                  preview: previewImage!,
+                  testing_center_id: postId,
+                });
+                form.reset();
+                setImages([]);
+                setFiles([]);
+              } catch (error) {
+                console.log(error);
+              }
+              setDebounce(false);
             })}
           >
-            Submit for review
+            {debounce ? "Submitting..." : "Submit for review"}
           </Button>
         </div>
         <Separator />
@@ -395,18 +429,41 @@ const NewTestingCenter = () => {
 
                     <div className="mx-auto mt-5 w-fit">
                       {files.length >= 5 && (
-                        <div className="grid-cols grid grid-cols-5 gap-3">
-                          {files.map((file) => {
-                            const imageUrl = URL.createObjectURL(file);
+                        <div className="flex flex-row-reverse gap-2">
+                          {images.map((file) => {
+                            if (previewImage === null) {
+                              setPreviewImage(file.name);
+                            }
+
                             return (
-                              <Image
+                              <button
                                 key={file.name}
-                                src={imageUrl}
-                                alt={file.name}
-                                width={500}
-                                height={500}
-                                className="block h-24 w-24 border-2 border-black/10 object-cover"
-                              />
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  setPreviewImage(file.name);
+                                }}
+                                className="relative"
+                              >
+                                <Image
+                                  src={file.url}
+                                  alt={file.name}
+                                  width={500}
+                                  height={500}
+                                  className={cn(
+                                    "block h-28 w-28 border-2 border-black/10 object-cover",
+                                    {
+                                      "border-2 border-blue":
+                                        previewImage === file.name,
+                                    },
+                                  )}
+                                />
+
+                                {file.name === previewImage && (
+                                  <div className="absolute bottom-0 w-full bg-blue/80 py-1 text-center text-sm text-white">
+                                    Thumbnail
+                                  </div>
+                                )}
+                              </button>
                             );
                           })}
                         </div>
@@ -531,6 +588,7 @@ const NewTestingCenter = () => {
                             <FormLabel>Region</FormLabel>
                             <FormControl>
                               <Select
+                                key={field.name}
                                 onValueChange={async (value) => {
                                   form.resetField("province");
                                   form.resetField("city");
@@ -543,21 +601,10 @@ const NewTestingCenter = () => {
                                     barangays: [],
                                   }));
 
-                                  const regname = await regionByCode(value);
-                                  console.log(
-                                    "🚀 ~ onValueChange={ ~ regname:",
-                                    regname,
-                                  );
-
-                                  console.log(
-                                    "🚀 ~ onValueChange={ ~ value:",
-                                    value,
-                                  );
-
                                   const { region_name } =
                                     await regionByCode(value);
 
-                                  field.value = region_name;
+                                  field.onChange(region_name);
                                   const provinceData = await provinces(value);
 
                                   setLocationData((prev) => ({
@@ -569,10 +616,10 @@ const NewTestingCenter = () => {
                                 <SelectTrigger className="w-full ">
                                   <SelectValue />
                                 </SelectTrigger>
-                                <SelectContent onBlur={field.onBlur}>
+                                <SelectContent>
                                   {locationData.regions.map((region) => (
                                     <SelectItem
-                                      value={region.region_code}
+                                      value={region.region_code.toString()}
                                       key={region.id}
                                     >
                                       {region.region_name}
@@ -595,20 +642,26 @@ const NewTestingCenter = () => {
                             <FormLabel>Province</FormLabel>
                             <FormControl>
                               <Select
+                                value=""
+                                defaultValue=""
+                                key={field.name}
                                 onValueChange={async (value) => {
                                   form.resetField("city");
                                   form.resetField("barangay");
 
+                                  console.log(field.value);
                                   setLocationData((prev) => ({
                                     ...prev,
                                     cities: [],
                                     barangays: [],
                                   }));
 
-                                  const { province_name } =
-                                    await provincesByCode(value);
+                                  const provinceName =
+                                    locationData.provinces.find((val) => {
+                                      return val.province_code === value;
+                                    })?.province_name;
 
-                                  field.value = province_name;
+                                  field.onChange(provinceName);
 
                                   const cityData = await cities(value);
 
@@ -619,22 +672,32 @@ const NewTestingCenter = () => {
                                 }}
                               >
                                 <SelectTrigger className="">
-                                  <SelectValue />
+                                  <SelectValue
+                                    className=""
+                                    defaultValue={field.value}
+                                  />
+                                  <p className="w-full text-left">
+                                    {field.value}
+                                  </p>
                                 </SelectTrigger>
-                                <SelectContent onBlur={field.onBlur}>
-                                  {locationData.provinces.map((province) => (
-                                    <SelectItem
-                                      value={province.province_code}
-                                      key={province.province_code}
-                                    >
-                                      {province.province_name}
-                                    </SelectItem>
-                                  ))}
+                                <SelectContent>
+                                  {locationData.provinces.map((province) => {
+                                    const currentDate = new Date();
+                                    const key =
+                                      province.province_code +
+                                      currentDate.toString();
+                                    return (
+                                      <SelectItem
+                                        value={province.province_code.toString()}
+                                        key={key}
+                                      >
+                                        {province.province_name}
+                                      </SelectItem>
+                                    );
+                                  })}
                                 </SelectContent>
                               </Select>
                             </FormControl>
-
-                            <FormMessage />
                           </FormItem>
                         )}
                       />
@@ -647,8 +710,17 @@ const NewTestingCenter = () => {
                             <FormLabel>City / Municipality</FormLabel>
                             <FormControl>
                               <Select
+                                value=""
                                 onValueChange={async (value) => {
                                   form.resetField("barangay");
+
+                                  const cityName = locationData.cities.find(
+                                    (val) => {
+                                      return val.city_code === value;
+                                    },
+                                  )?.city_name;
+
+                                  field.onChange(cityName);
 
                                   setLocationData((prev) => ({
                                     ...prev,
@@ -664,16 +736,19 @@ const NewTestingCenter = () => {
                                 }}
                               >
                                 <SelectTrigger className="">
-                                  <SelectValue />
+                                  <SelectValue
+                                    className=""
+                                    defaultValue={field.value}
+                                  />
+                                  <p className="w-full text-left">
+                                    {field.value}
+                                  </p>
                                 </SelectTrigger>
                                 <SelectContent onBlur={field.onBlur}>
                                   {locationData.cities.map((city) => (
                                     <SelectItem
                                       value={city.city_code}
                                       key={city.city_code}
-                                      onClick={() => {
-                                        field.value = city.city_name;
-                                      }}
                                     >
                                       {city.city_name}
                                     </SelectItem>
@@ -681,8 +756,6 @@ const NewTestingCenter = () => {
                                 </SelectContent>
                               </Select>
                             </FormControl>
-
-                            <FormMessage />
                           </FormItem>
                         )}
                       />
@@ -694,18 +767,32 @@ const NewTestingCenter = () => {
                           <FormItem className="w-full">
                             <FormLabel>Barangay</FormLabel>
                             <FormControl>
-                              <Select>
+                              <Select
+                                value=""
+                                onValueChange={(value) => {
+                                  const brgyName = locationData.barangays.find(
+                                    (val) => {
+                                      return val.brgy_code === value;
+                                    },
+                                  )?.brgy_name;
+
+                                  field.onChange(brgyName);
+                                }}
+                              >
                                 <SelectTrigger className="">
-                                  <SelectValue />
+                                  <SelectValue
+                                    className=""
+                                    defaultValue={field.value}
+                                  />
+                                  <p className="w-full text-left">
+                                    {field.value}
+                                  </p>
                                 </SelectTrigger>
                                 <SelectContent onBlur={field.onBlur}>
                                   {locationData.barangays.map((barangay) => (
                                     <SelectItem
                                       value={barangay.brgy_code}
                                       key={barangay.brgy_code}
-                                      onClick={() => {
-                                        field.value = barangay.brgy_name;
-                                      }}
                                     >
                                       {barangay.brgy_name}
                                     </SelectItem>
@@ -713,8 +800,6 @@ const NewTestingCenter = () => {
                                 </SelectContent>
                               </Select>
                             </FormControl>
-
-                            <FormMessage />
                           </FormItem>
                         )}
                       />

@@ -39,20 +39,23 @@ export type Database = {
         Row: {
           created_at: string
           id: number
-          image: string
           testing_center: number
+          thumbnail: boolean
+          url: string
         }
         Insert: {
           created_at?: string
           id?: number
-          image: string
           testing_center: number
+          thumbnail?: boolean
+          url: string
         }
         Update: {
           created_at?: string
           id?: number
-          image?: string
           testing_center?: number
+          thumbnail?: boolean
+          url?: string
         }
         Relationships: [
           {
@@ -108,21 +111,21 @@ export type Database = {
       open_hours: {
         Row: {
           close_time: string | null
-          day: Database["public"]["Enums"]["day_enum"]
+          day: Database["public"]["Enums"]["day_enum"] | null
           id: number
           open_time: string | null
           testing_center: number
         }
         Insert: {
           close_time?: string | null
-          day: Database["public"]["Enums"]["day_enum"]
+          day?: Database["public"]["Enums"]["day_enum"] | null
           id?: number
           open_time?: string | null
           testing_center: number
         }
         Update: {
           close_time?: string | null
-          day?: Database["public"]["Enums"]["day_enum"]
+          day?: Database["public"]["Enums"]["day_enum"] | null
           id?: number
           open_time?: string | null
           testing_center?: number
@@ -199,7 +202,14 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      day_enum: "monday" | "tuesday" | "wednesday" | "thursday" | "friday"
+      day_enum:
+        | "monday"
+        | "tuesday"
+        | "wednesday"
+        | "thursday"
+        | "friday"
+        | "saturday"
+        | "sunday"
       user_role_enum: "user" | "testing_center" | "admin"
     }
     CompositeTypes: {
