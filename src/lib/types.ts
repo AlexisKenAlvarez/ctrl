@@ -39,20 +39,23 @@ export type Database = {
         Row: {
           created_at: string
           id: number
-          image: string
           testing_center: number
+          thumbnail: boolean
+          url: string
         }
         Insert: {
           created_at?: string
           id?: number
-          image: string
           testing_center: number
+          thumbnail?: boolean
+          url: string
         }
         Update: {
           created_at?: string
           id?: number
-          image?: string
           testing_center?: number
+          thumbnail?: boolean
+          url?: string
         }
         Relationships: [
           {
@@ -108,21 +111,21 @@ export type Database = {
       open_hours: {
         Row: {
           close_time: string | null
-          day: Database["public"]["Enums"]["day_enum"]
+          day: Database["public"]["Enums"]["day_enum"] | null
           id: number
           open_time: string | null
           testing_center: number
         }
         Insert: {
           close_time?: string | null
-          day: Database["public"]["Enums"]["day_enum"]
+          day?: Database["public"]["Enums"]["day_enum"] | null
           id?: number
           open_time?: string | null
           testing_center: number
         }
         Update: {
           close_time?: string | null
-          day?: Database["public"]["Enums"]["day_enum"]
+          day?: Database["public"]["Enums"]["day_enum"] | null
           id?: number
           open_time?: string | null
           testing_center?: number
@@ -145,7 +148,11 @@ export type Database = {
           google_map: string | null
           id: number
           name: string
+          owner: string
           services: string
+          status:
+            | Database["public"]["Enums"]["testing_center_status_enum"]
+            | null
         }
         Insert: {
           contact: number
@@ -154,7 +161,11 @@ export type Database = {
           google_map?: string | null
           id?: number
           name: string
+          owner?: string
           services: string
+          status?:
+            | Database["public"]["Enums"]["testing_center_status_enum"]
+            | null
         }
         Update: {
           contact?: number
@@ -163,9 +174,21 @@ export type Database = {
           google_map?: string | null
           id?: number
           name?: string
+          owner?: string
           services?: string
+          status?:
+            | Database["public"]["Enums"]["testing_center_status_enum"]
+            | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "testing_centers_owner_fkey"
+            columns: ["owner"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       users: {
         Row: {
@@ -199,7 +222,15 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      day_enum: "monday" | "tuesday" | "wednesday" | "thursday" | "friday"
+      day_enum:
+        | "monday"
+        | "tuesday"
+        | "wednesday"
+        | "thursday"
+        | "friday"
+        | "saturday"
+        | "sunday"
+      testing_center_status_enum: "pending" | "accepted" | "rejected"
       user_role_enum: "user" | "testing_center" | "admin"
     }
     CompositeTypes: {

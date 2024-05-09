@@ -7,6 +7,29 @@ export const authRouter = createTRPCRouter({
     const user = ctx.user;
     return { user };
   }),
+  getUserFromSession: publicProcedure.query(async ({ ctx }) => {
+    const user = ctx.user;
+
+    if (!user) {
+      return null
+    }
+
+    const { data, error } = await ctx.supabase
+      .from("users")
+      .select("*")
+      .eq("id", user.id)
+      .single();
+
+    if (error) {
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: error.message,
+      });
+    }
+
+    return data
+  }),
+
   getUser: publicProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ input, ctx }) => {
