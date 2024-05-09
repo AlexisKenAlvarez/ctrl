@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Button } from "./ui/button";
 import { Separator } from "./ui/separator";
 import Image from "next/image";
+import { Pencil, Trash } from "lucide-react";
 
 import {
   Breadcrumb,
@@ -23,6 +24,7 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import { useEffect, useState } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
 const TestingCenter = ({
@@ -45,7 +47,7 @@ const TestingCenter = ({
   return (
     <div className="mx-auto flex w-full flex-1 flex-col ">
       <div className="sticky top-[5.8rem] z-10 w-full ">
-        <div className="flex  h-20 w-full items-center justify-between bg-white px-5 py-4 drop-shadow-md 2xl:px-20">
+        <div className="flex  h-20 w-full items-center justify-between bg-white px-5 py-4 drop-shadow-md">
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>
@@ -64,11 +66,11 @@ const TestingCenter = ({
         <Separator />
       </div>
 
-      <div className="w-full flex-1 bg-white p-5  2xl:px-20 flex gap-4 flex-wrap">
+      <div className="flex w-full flex-1 flex-wrap  gap-4 bg-white p-5">
         {centerData.map((item) => (
           <div className="" key={item.id}>
             <div className="group  relative h-64 w-64 overflow-hidden rounded-lg border">
-              <ImageSlider imageData={item.images} />
+              <ImageSlider imageData={item.images} centerId={item.id} />
             </div>
             <div className="mt-3">
               <h1 className=" font-medium">{item.name}</h1>
@@ -77,9 +79,13 @@ const TestingCenter = ({
                 {item.location?.province}
               </p>
 
-              <p className={cn("text-sm capitalize", {
-                "text-orange-500": item.status === "pending",
-              })}>{item.status}</p>
+              <p
+                className={cn("text-sm capitalize", {
+                  "text-orange-500": item.status === "pending",
+                })}
+              >
+                {item.status}
+              </p>
             </div>
           </div>
         ))}
@@ -96,7 +102,14 @@ interface ImageType {
   testing_center: number;
 }
 
-const ImageSlider = ({ imageData }: { imageData: ImageType[] }) => {
+const ImageSlider = ({
+  imageData,
+  centerId,
+}: {
+  imageData: ImageType[];
+  centerId: number;
+}) => {
+  const [imageLoading, setImageLoading] = useState(true);
   const [api, setApi] = useState<CarouselApi>();
   const [current, setCurrent] = useState(0);
 
@@ -115,11 +128,17 @@ const ImageSlider = ({ imageData }: { imageData: ImageType[] }) => {
   return (
     <Carousel setApi={setApi}>
       <CarouselContent>
+        {imageLoading && (
+          <Skeleton className="h-64 w-full absolute top-0 left-0" />
+        )}
         {imageData.map((image) => {
           if (image.thumbnail) {
             return (
               <CarouselItem className="h-64 w-64" key={image.id}>
                 <Image
+                  onLoad={() => {
+                    setImageLoading(false);
+                  }}
                   src={image.url}
                   width={500}
                   height={500}
@@ -150,6 +169,23 @@ const ImageSlider = ({ imageData }: { imageData: ImageType[] }) => {
       <div className="pointer-events-none opacity-0 transition-all duration-100 ease-in-out group-hover:pointer-events-auto group-hover:opacity-100">
         <CarouselPrevious className="absolute left-3 z-10" />
         <CarouselNext className="absolute right-3 z-10" />
+      </div>
+      <div className="absolute left-0 top-2 flex w-full justify-between px-3">
+        <Link href={`/testing-center/edit/${centerId}`}>
+          <Button
+            className="h-8 w-5 shrink-0 rounded-full opacity-50 hover:opacity-100"
+            variant={"secondary"}
+          >
+            <Pencil size={14} className="absolute" />
+          </Button>
+        </Link>
+
+        <Button
+          className="h-8 w-5 shrink-0 rounded-full opacity-50 hover:opacity-100"
+          variant={"secondary"}
+        >
+          <Trash size={14} color="#ef4444" className="absolute" />
+        </Button>
       </div>
       <div className="absolute bottom-3 left-0 right-0 mx-auto flex w-fit items-center gap-1">
         {Array.from({ length: imageData.length }).map((_, index) => (
