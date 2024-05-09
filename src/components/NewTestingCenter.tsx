@@ -83,6 +83,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import SelectTime from "./SelectTime";
 import { api } from "@/trpc/react";
+import { supabase } from "supabase/supabaseClient";
 
 interface DaysType {
   label: string;
@@ -97,6 +98,8 @@ interface ImagesType {
 }
 
 const NewTestingCenter = () => {
+  const user = supabase.auth.getSession();
+
   const uploadTestingCenterMutation = api.user.addTestingCenter.useMutation();
   const [locationData, setLocationData] = useState<LocationInterface>({
     regions: [],
@@ -289,6 +292,7 @@ const NewTestingCenter = () => {
                   await uploadTestingCenterMutation.mutateAsync({
                     ...data,
                     open_hours: daysValue,
+                    ownerId: (await user).data.session!.user.id,
                   });
 
                 const postId = uploadData.id;

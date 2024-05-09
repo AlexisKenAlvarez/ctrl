@@ -33,6 +33,7 @@ export const userRouter = createTRPCRouter({
   addTestingCenter: protectedProcedure
     .input(
       z.object({
+        ownerId: z.string(),
         name: z.string().min(1),
         province: z.string().min(1),
         city: z.string().min(1),
@@ -63,6 +64,8 @@ export const userRouter = createTRPCRouter({
           facebook: input.facebook,
           contact: parseInt(input.contact),
           google_map: input.google_map,
+          owner: input.ownerId,
+          status: "pending",
         })
         .select("id")
         .single();
@@ -129,7 +132,7 @@ export const userRouter = createTRPCRouter({
         testing_center_id: z.number(),
         preview: z.string(),
         url: z.string(),
-        thumbnail: z.boolean()
+        thumbnail: z.boolean(),
       }),
     )
     .query(async ({ input, ctx }) => {
@@ -146,5 +149,18 @@ export const userRouter = createTRPCRouter({
           message: error.message,
         });
       }
+    }),
+  getProducts: protectedProcedure
+    .input(
+      z.object({
+        input: z.string(),
+        status: z.enum(["all", "pending", "accepted", "rejected"]),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      const { data } = await ctx.supabase
+        .from("testing_centers")
+        .select("*, ")
+        .eq("status", input.status);
     }),
 });

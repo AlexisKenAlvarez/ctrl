@@ -102,6 +102,7 @@ const Signin = () => {
             await supabase.auth.updateUser({
               data: {
                 name: userData.full_name,
+                type: userData.user_role
               },
             });
 
