@@ -315,8 +315,8 @@ const NewTestingCenter = () => {
         <Separator />
       </div>
 
-      <div className="w-ful flex space-x-10 bg-white">
-        <div className=" w-56 border-r py-12">
+      <div className="w-ful flex bg-white md:space-x-10">
+        <div className=" hidden w-56 border-r py-12 md:block">
           <h1 className="px-7">Information</h1>
           <ul className="mt-2 text-sm">
             {INFORMATION_NAV.map((items) => (
@@ -336,7 +336,7 @@ const NewTestingCenter = () => {
           </ul>
         </div>
 
-        <div className="flex w-fit max-w-2xl flex-col justify-center  p-12">
+        <div className="flex w-fit max-w-2xl flex-col justify-center p-5 md:p-12">
           <h1 className="text-xl">Add new testing center</h1>
           <p className="max-w-prose text-left text-sm opacity-50">
             This testing center will be submitted for review. It might take some
@@ -388,6 +388,7 @@ const NewTestingCenter = () => {
                     )}
                   />
 
+                  {/* IMAGES */}
                   <div className="">
                     <h1 className="">Upload Images</h1>
                     <p
@@ -454,7 +455,7 @@ const NewTestingCenter = () => {
                                   width={500}
                                   height={500}
                                   className={cn(
-                                    "block h-28 w-28 border-2 border-black/10 object-cover",
+                                    "block sm:h-28 sm:w-28 w-16 h-16 border-2 border-black/10 object-cover",
                                     {
                                       "border-2 border-blue":
                                         previewImage === file.name,
@@ -463,7 +464,7 @@ const NewTestingCenter = () => {
                                 />
 
                                 {file.name === previewImage && (
-                                  <div className="absolute bottom-0 w-full bg-blue/80 py-1 text-center text-sm text-white">
+                                  <div className="absolute bottom-0 w-full bg-blue/80 py-1 text-center text-white sm:text-sn text-[8px]">
                                     Thumbnail
                                   </div>
                                 )}
@@ -575,8 +576,8 @@ const NewTestingCenter = () => {
                 </div>
 
                 <div
-                  className={cn("space-y-6", {
-                    hidden: page !== "location",
+                  className={cn("mt-10 space-y-6 md:mt-0", {
+                    "md:hidden": page !== "location",
                   })}
                 >
                   <div className="">

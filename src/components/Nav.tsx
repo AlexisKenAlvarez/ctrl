@@ -27,7 +27,7 @@ const Nav = ({
   const router = useRouter();
   return (
     <nav className="sticky left-0 top-0 z-50 mx-auto w-full bg-white">
-      <nav className="mx-auto w-full p-5">
+      <nav className="mx-auto w-full p-5 2xl:px-20">
         <div className="mx-auto flex items-center justify-between">
           <Link href="/">
             <Image

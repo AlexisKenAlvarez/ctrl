@@ -115,7 +115,7 @@ const SelectTime = ({
           setOpen((val) => !val);
         }}
       >
-        <p className="font-light capitalize">{value ?? `${type} time`}</p>
+        <p className="font-light capitalize">{value ?? `${type}`}</p>
       </Button>
       <AnimatePresence>
         {open && (

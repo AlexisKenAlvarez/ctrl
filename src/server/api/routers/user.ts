@@ -150,17 +150,43 @@ export const userRouter = createTRPCRouter({
         });
       }
     }),
-  getProducts: protectedProcedure
+  getCenters: protectedProcedure
     .input(
       z.object({
-        input: z.string(),
         status: z.enum(["all", "pending", "accepted", "rejected"]),
+        owner: z.string(),
       }),
     )
-    .mutation(async ({ input, ctx }) => {
-      const { data } = await ctx.supabase
+    .query(async ({ input, ctx }) => {
+      if (input.status === "all") {
+        const { data, error } = await ctx.supabase
+          .from("testing_centers")
+          .select(
+            "*, location:locations(*), open_hour:open_hours(*), images(*)",
+          )
+          .eq("owner", input.owner);
+
+        if (error) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: error.message,
+          });
+        }
+
+        return data;
+      }
+      const { data, error } = await ctx.supabase
         .from("testing_centers")
-        .select("*, ")
+        .select("*, location:locations(*), open_hour:open_hours(*), images(*)")
         .eq("status", input.status);
+
+      if (error) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: error.message,
+        });
+      }
+
+      return data;
     }),
 });
