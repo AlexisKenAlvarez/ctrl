@@ -23,6 +23,17 @@ const centerValues = z.object({
   google_map: z.string().nullish(),
 });
 
+const imagesObject = z.array(
+  z.object({
+    id: z.number(),
+    created_at: z.string(),
+    name: z.string(),
+    testing_center: z.number(),
+    thumbnail: z.boolean(),
+    url: z.string(),
+  }),
+);
+
 export const userRouter = createTRPCRouter({
   updateRole: publicProcedure
     .input(
@@ -255,14 +266,7 @@ export const userRouter = createTRPCRouter({
         ),
         new_thumbnail: z.string(),
         imageChanged: z.boolean(),
-        images: z.array(z.object({
-          id: z.number(),
-          created_at: z.string(),
-          name: z.string(),
-          testing_center: z.number(),
-          thumbnail: z.boolean(),
-          url: z.string()
-        }))
+        images: imagesObject,
       }),
     )
     .mutation(async ({ input, ctx }) => {
@@ -368,7 +372,8 @@ export const userRouter = createTRPCRouter({
 
         if (
           input.new_thumbnail !== input.old_thumbnail &&
-          input.thumbnailChanged && !input.imageChanged
+          input.thumbnailChanged &&
+          !input.imageChanged
         ) {
           await ctx.supabase
             .from("images")
@@ -376,7 +381,7 @@ export const userRouter = createTRPCRouter({
               thumbnail: false,
             })
             .eq("testing_center", input.centerId)
-            .eq("name", input.old_thumbnail)
+            .eq("name", input.old_thumbnail);
 
           await ctx.supabase
             .from("images")
@@ -384,20 +389,20 @@ export const userRouter = createTRPCRouter({
               thumbnail: true,
             })
             .eq("testing_center", input.centerId)
-            .eq("name", input.new_thumbnail)
+            .eq("name", input.new_thumbnail);
         }
 
         if (input.imageChanged) {
           input.images.forEach(async (image) => {
-            const fileKey = getFileKey(image.url)
+            const fileKey = getFileKey(image.url);
 
-            await utapi.deleteFiles(fileKey!)
-          })
+            await utapi.deleteFiles(fileKey!);
+          });
 
           await ctx.supabase
             .from("images")
             .delete()
-            .eq("testing_center", input.centerId)
+            .eq("testing_center", input.centerId);
         }
 
         input.new_open_hours.forEach(async (hour, index) => {
@@ -412,12 +417,37 @@ export const userRouter = createTRPCRouter({
               .eq("day", hour.label);
           }
         });
-
       } catch (error) {
         console.log(error);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Error updating center",
+        });
+      }
+    }),
+  deleteCenter: protectedProcedure
+    .input(
+      z.object({
+        centerId: z.number(),
+        images: imagesObject,
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      input.images.forEach(async (image) => {
+        const fileKey = getFileKey(image.url);
+
+        await utapi.deleteFiles(fileKey!);
+      });
+
+      const { error } = await ctx.supabase
+        .from("testing_centers")
+        .delete()
+        .eq("id", input.centerId);
+
+      if (error) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: error.message,
         });
       }
     }),

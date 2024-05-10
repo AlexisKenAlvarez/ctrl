@@ -27,6 +27,18 @@ import { useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+
 const TestingCenter = ({
   centersData,
   owner,
@@ -97,6 +109,7 @@ const TestingCenter = ({
 interface ImageType {
   id: number;
   url: string;
+  name: string
   thumbnail: boolean;
   created_at: string;
   testing_center: number;
@@ -109,19 +122,21 @@ const ImageSlider = ({
   imageData: ImageType[];
   centerId: number;
 }) => {
+
+  const deleteCenterMutation = api.user.deleteCenter.useMutation()
   const [imageLoading, setImageLoading] = useState(true);
-  const [api, setApi] = useState<CarouselApi>();
+  const [cApi, setApi] = useState<CarouselApi>();
   const [current, setCurrent] = useState(0);
 
   useEffect(() => {
-    if (!api) {
+    if (!cApi) {
       return;
     }
 
-    setCurrent(api.selectedScrollSnap() + 1);
+    setCurrent(cApi.selectedScrollSnap() + 1);
 
-    api.on("select", () => {
-      setCurrent(api.selectedScrollSnap() + 1);
+    cApi.on("select", () => {
+      setCurrent(cApi.selectedScrollSnap() + 1);
     });
   }, [api]);
 
@@ -129,7 +144,7 @@ const ImageSlider = ({
     <Carousel setApi={setApi}>
       <CarouselContent>
         {imageLoading && (
-          <Skeleton className="h-64 w-full absolute top-0 left-0" />
+          <Skeleton className="absolute left-0 top-0 h-64 w-full" />
         )}
         {imageData.map((image) => {
           if (image.thumbnail) {
@@ -180,12 +195,33 @@ const ImageSlider = ({
           </Button>
         </Link>
 
-        <Button
-          className="h-8 w-5 shrink-0 rounded-full opacity-50 hover:opacity-100"
-          variant={"secondary"}
-        >
-          <Trash size={14} color="#ef4444" className="absolute" />
-        </Button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              className="relative h-8 w-5 shrink-0 rounded-full opacity-50 hover:opacity-100"
+              variant={"secondary"}
+            >
+              <Trash size={14} color="#ef4444" className="absolute" />
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. This action is destructive and will permanently delete this testing center from our servers.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={async () => {
+                await deleteCenterMutation.mutateAsync({
+                  centerId: centerId,
+                  images: imageData
+                })
+              }}>Continue</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
       <div className="absolute bottom-3 left-0 right-0 mx-auto flex w-fit items-center gap-1">
         {Array.from({ length: imageData.length }).map((_, index) => (
