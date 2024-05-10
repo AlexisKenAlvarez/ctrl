@@ -7,12 +7,13 @@ import { cn } from "@/lib/utils";
 import { useUploadThing } from "@/utils/uploadthing";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useDropzone } from "@uploadthing/react";
-import { Upload } from "lucide-react";
+import { Router, Upload } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { generateClientDropzoneAccept } from "uploadthing/client";
-import { z } from "zod";
+import { set, z } from "zod";
+import { useRouter } from "next/navigation";
 
 interface LocationInterface {
   regions: {
@@ -80,7 +81,7 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Checkbox } from "@/components/ui/checkbox";
-import { api } from "@/trpc/react";
+import { RouterOutputs, api } from "@/trpc/react";
 import { supabase } from "supabase/supabaseClient";
 import SelectTime from "./SelectTime";
 
@@ -96,22 +97,15 @@ interface ImagesType {
   name: string;
 }
 
-const NewTestingCenter = () => {
+const EditCenter = ({
+  centerData,
+  centerId,
+}: {
+  centerData: RouterOutputs["user"]["getSingleCenter"];
+  centerId: string;
+}) => {
   const user = supabase.auth.getSession();
-
-  const uploadTestingCenterMutation = api.user.addTestingCenter.useMutation();
-  const [locationData, setLocationData] = useState<LocationInterface>({
-    regions: [],
-    provinces: [],
-    cities: [],
-    barangays: [],
-  });
-
-  const [page, setPage] = useState<"basic" | "location">("basic");
-  const [files, setFiles] = useState<File[]>([]);
-  const [images, setImages] = useState<ImagesType[]>([]);
-  const [debounce, setDebounce] = useState(false);
-
+  const router = useRouter();
   const [daysValue, setDaysValue] = useState<DaysType[]>([
     {
       label: "monday",
@@ -156,6 +150,77 @@ const NewTestingCenter = () => {
       close: null,
     },
   ]);
+
+  const [ogDaysValue, setOgDaysValue] = useState<DaysType[]>([
+    {
+      label: "monday",
+      checked: false,
+      open: null,
+      close: null,
+    },
+    {
+      label: "tuesday",
+      checked: false,
+      open: null,
+      close: null,
+    },
+    {
+      label: "wednesday",
+      checked: false,
+      open: null,
+      close: null,
+    },
+    {
+      label: "thursday",
+      checked: false,
+      open: null,
+      close: null,
+    },
+    {
+      label: "friday",
+      checked: false,
+      open: null,
+      close: null,
+    },
+    {
+      label: "saturday",
+      checked: false,
+      open: null,
+      close: null,
+    },
+    {
+      label: "sunday",
+      checked: false,
+      open: null,
+      close: null,
+    },
+  ]);
+
+  const { data: center, isFetched: centerFetched } =
+    api.user.getSingleCenter.useQuery(
+      {
+        id: centerId,
+      },
+      {
+        initialData: centerData,
+      },
+    );
+
+  const editCenterMutation = api.user.updateCenter.useMutation();
+  const utils = api.useUtils();
+  const [locationData, setLocationData] = useState<LocationInterface>({
+    regions: [],
+    provinces: [],
+    cities: [],
+    barangays: [],
+  });
+
+  const [page, setPage] = useState<"basic" | "location">("basic");
+  const [files, setFiles] = useState<File[]>([]);
+  const [images, setImages] = useState<ImagesType[]>([]);
+  const [debounce, setDebounce] = useState(false);
+  const [thumbnail, setThumbnail] = useState("");
+
   const handleTime = useCallback(
     ({ type, value, day }: { type: string; value: string; day: string }) => {
       setDaysValue((prev) =>
@@ -180,6 +245,7 @@ const NewTestingCenter = () => {
     setImages([]);
     if (acceptedFiles.length === 5) {
       acceptedFiles.forEach((file) => {
+        setPreviewImage(null);
         const imageUrl = URL.createObjectURL(file);
 
         setImages((prev) => [...prev, { url: imageUrl, name: file.name }]);
@@ -235,33 +301,107 @@ const NewTestingCenter = () => {
   const form = useForm<formType>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
-      region: "",
-      province: undefined,
-      city: "",
-      barangay: "",
-      zip: "",
-      landmark: "",
-      services: "",
-      facebook: "",
-      contact: "",
-      google_map: null,
+      name: center.name,
+      region: center.location?.region,
+      province: center.location?.province,
+      city: center.location?.city,
+      barangay: center.location?.barangay,
+      zip: center.location?.zip.toString(),
+      landmark: center.location?.landmark,
+      services: center.services,
+      facebook: center.facebook,
+      contact: center.contact.toString(),
+      google_map: center.google_map,
     },
   });
 
   useEffect(() => {
     void (async () => {
       const regionData = await regions();
-      setLocationData((prev) => ({ ...prev, regions: regionData }));
+
+      const regionCode = regionData.find(
+        (data: { region_name: string }) =>
+          data.region_name === center.location?.region,
+      ).region_code;
+      const provinceData = await provinces(regionCode);
+
+      const provinceCode = await provinceData.find(
+        (data: { province_name: string }) =>
+          data.province_name === center.location?.province,
+      ).province_code;
+
+      const cityData = await cities(provinceCode);
+      const cityCode = cityData.find(
+        (data: { city_name: string }) =>
+          data.city_name === center.location?.city,
+      ).city_code;
+
+      const barangayData = await barangays(cityCode);
+
+      setLocationData((prev) => ({
+        ...prev,
+        barangays: barangayData,
+        cities: cityData,
+        provinces: provinceData,
+        regions: regionData,
+      }));
     })();
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    setDaysValue((val) =>
+      val.map((item) => {
+        const dayHour = center.open_hour.find(
+          (hour) => hour.day === item.label,
+        );
+        if (dayHour && dayHour.open_time !== null) {
+          return {
+            ...item,
+            checked: true,
+            open: dayHour.open_time,
+            close: dayHour.close_time,
+          };
+        } else {
+          return {
+            ...item,
+            checked: false,
+            open: null,
+            close: null,
+          };
+        }
+      }),
+    );
+
+    setOgDaysValue((val) =>
+      val.map((item) => {
+        const dayHour = center.open_hour.find(
+          (hour) => hour.day === item.label,
+        );
+        if (dayHour && dayHour.open_time !== null) {
+          return {
+            ...item,
+            checked: true,
+            open: dayHour.open_time,
+            close: dayHour.close_time,
+          };
+        } else {
+          return {
+            ...item,
+            checked: false,
+            open: null,
+            close: null,
+          };
+        }
+      }),
+    );
+  }, [centerFetched, center.open_hour]);
+
   return (
     <div className="overflow relative mx-auto flex w-full flex-1 flex-col">
       <div className="sticky top-[5.8rem] z-10 w-full drop-shadow-md">
-        <div className="flex h-20 w-full items-center justify-between bg-white px-5 py-4  ">
+        <div className="flex h-20 w-full items-center justify-between bg-white px-5 py-4">
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>
@@ -283,38 +423,75 @@ const NewTestingCenter = () => {
                 "pointer-events-none": debounce,
               },
             )}
-            disabled={!form.formState.isValid || files.length !== 5}
-            onClick={form.handleSubmit(async (data) => {
+            disabled={!form.formState.isValid}
+            onClick={form.handleSubmit(async (values) => {
+              console.log("Old hour", ogDaysValue);
+              console.log("New hour", daysValue);
               setDebounce(true);
               try {
-                const uploadData =
-                  await uploadTestingCenterMutation.mutateAsync({
-                    ...data,
-                    open_hours: daysValue,
-                    ownerId: (await user).data.session!.user.id,
-                  });
-
-                const postId = uploadData.id;
-                await startUpload(files, {
-                  preview: previewImage!,
-                  testing_center_id: postId,
+                await editCenterMutation.mutateAsync({
+                  centerId: centerId,
+                  oldValues: {
+                    name: center.name,
+                    province: center.location!.province,
+                    city: center.location!.city,
+                    region: center.location!.region,
+                    barangay: center.location!.barangay,
+                    zip: center.location!.zip.toString(),
+                    landmark: center.location!.landmark,
+                    services: center.services,
+                    facebook: center.facebook,
+                    contact: center.contact.toString(),
+                    google_map: center.google_map,
+                  },
+                  old_thumbnail: center.images.find((img) => img.thumbnail)!
+                    .name,
+                  old_open_hours: ogDaysValue,
+                  newValues: {
+                    ...values,
+                  },
+                  new_open_hours: daysValue,
+                  new_thumbnail: thumbnail,
+                  thumbnailChanged: thumbnail !== "",
+                  imageChanged: previewImage !== null,
+                  images: center.images,
                 });
-                form.reset();
-                setImages([]);
-                setFiles([]);
+
+                if (previewImage !== null) {
+                  await startUpload(files, {
+                    preview: previewImage,
+                    testing_center_id: parseInt(centerId),
+                  })
+                }
+
+                form.setValue("name", values.name);
+                form.setValue("region", values.region);
+                form.setValue("province", values.province);
+                form.setValue("city", values.city);
+                form.setValue("barangay", values.barangay);
+                form.setValue("zip", values.zip);
+                form.setValue("landmark", values.landmark);
+                form.setValue("services", values.services);
+                form.setValue("facebook", values.facebook);
+                form.setValue("contact", values.contact);
+                form.setValue("google_map", values.google_map);
+
+                window.location.href = "/testing-center";
+                console.log("Edit success");
+                await utils.user.getCenters.invalidate();
               } catch (error) {
                 console.log(error);
               }
               setDebounce(false);
             })}
           >
-            {debounce ? "Submitting..." : "Submit for review"}
+            {debounce ? "Saving..." : "Save changes"}
           </Button>
         </div>
         <Separator />
       </div>
 
-      <div className="w-ful flex bg-white md:space-x-10 ">
+      <div className="w-ful flex bg-white md:space-x-10">
         <div className=" hidden w-56 border-r py-12 md:block">
           <h1 className="px-7">Information</h1>
           <ul className="mt-2 text-sm">
@@ -400,41 +577,69 @@ const NewTestingCenter = () => {
                     <div
                       {...getRootProps()}
                       className={cn(
-                        "group relative mx-auto mt-3 h-36 w-full cursor-pointer bg-gray-100 p-3",
-                        {
-                          "h-10 p-0": files.length >= 5,
-                        },
+                        "group relative mx-auto mt-3 h-10 w-full cursor-pointer bg-gray-100 p-0",
                       )}
                     >
                       <div
                         className={cn(
-                          "flex h-full w-full items-center justify-center border-4 border-dashed border-black/10 transition-all duration-300 ease-in-out group-hover:border-black/50",
-                          {
-                            "border-0 ": files.length >= 5,
-                          },
+                          "flex h-full w-full items-center justify-center border-0 border-dashed border-black/10 transition-all duration-300 ease-in-out group-hover:border-black/50 ",
                         )}
                       >
                         <input {...getInputProps()} multiple />
 
                         <div className="flex flex-col items-center space-y-2 opacity-50 transition-all duration-300 ease-in-out group-hover:opacity-100">
-                          {files.length > 0 ? (
-                            <p className="">Replace images</p>
-                          ) : (
-                            <>
-                              <Upload size={38} />
-                              <p className="text-sm">
-                                Drag and drop files here
-                              </p>
-                            </>
-                          )}
+                          <p className="">Replace images</p>
                         </div>
                       </div>
                     </div>
 
                     <div className="mx-auto mt-5 w-fit">
-                      {files.length >= 5 && (
-                        <div className="flex flex-row-reverse gap-2">
-                          {images.map((file) => {
+                      <div className="flex flex-row-reverse gap-2">
+                        {files.length !== 5 &&
+                          center.images.map((file) => {
+                            if (previewImage === null) {
+                              setPreviewImage(file.name);
+                            }
+
+                            return (
+                              <button
+                                key={file.name}
+                                onClick={(e) => {
+                                  e.preventDefault();
+
+                                  if (thumbnail === "") {
+                                    setThumbnail(file.name);
+                                  } else {
+                                    setPreviewImage(file.name);
+                                  }
+                                }}
+                                className="relative"
+                              >
+                                <Image
+                                  src={file.url}
+                                  alt={file.name}
+                                  width={500}
+                                  height={500}
+                                  className={cn(
+                                    "block h-16 w-16 border-2 border-black/10 object-cover sm:h-28 sm:w-28",
+                                    {
+                                      "border-2 border-blue":
+                                        previewImage === file.name,
+                                    },
+                                  )}
+                                />
+
+                                {file.name === previewImage && (
+                                  <div className="absolute bottom-0 w-full bg-blue/80 py-1 text-center text-[8px] text-white sm:text-sm">
+                                    Thumbnail
+                                  </div>
+                                )}
+                              </button>
+                            );
+                          })}
+
+                        {files.length === 5 &&
+                          images.map((file) => {
                             if (previewImage === null) {
                               setPreviewImage(file.name);
                             }
@@ -463,15 +668,14 @@ const NewTestingCenter = () => {
                                 />
 
                                 {file.name === previewImage && (
-                                  <div className="sm:text-sn absolute bottom-0 w-full bg-blue/80 py-1 text-center text-[8px] text-white">
+                                  <div className="absolute bottom-0 w-full bg-blue/80 py-1 text-center text-[8px] text-white sm:text-sm">
                                     Thumbnail
                                   </div>
                                 )}
                               </button>
                             );
                           })}
-                        </div>
-                      )}
+                      </div>
                     </div>
                   </div>
 
@@ -510,6 +714,7 @@ const NewTestingCenter = () => {
                           <div className="flex w-full items-center gap-2">
                             <h1 className="flex w-full items-center gap-2 capitalize">
                               <Checkbox
+                                checked={item.checked}
                                 onCheckedChange={(e) => {
                                   if (e) {
                                     setDaysValue((prev) =>
@@ -596,9 +801,9 @@ const NewTestingCenter = () => {
                                 defaultValue=""
                                 key={field.name}
                                 onValueChange={async (value) => {
-                                  form.resetField("province");
-                                  form.resetField("city");
-                                  form.resetField("barangay");
+                                  form.setValue("province", "");
+                                  form.setValue("city", "");
+                                  form.setValue("barangay", "");
 
                                   setLocationData((prev) => ({
                                     ...prev,
@@ -658,8 +863,8 @@ const NewTestingCenter = () => {
                                 defaultValue=""
                                 key={field.name}
                                 onValueChange={async (value) => {
-                                  form.resetField("city");
-                                  form.resetField("barangay");
+                                  form.setValue("city", "");
+                                  form.setValue("barangay", "");
 
                                   console.log(field.value);
                                   setLocationData((prev) => ({
@@ -724,7 +929,7 @@ const NewTestingCenter = () => {
                               <Select
                                 value=""
                                 onValueChange={async (value) => {
-                                  form.resetField("barangay");
+                                  form.setValue("barangay", "");
 
                                   const cityName = locationData.cities.find(
                                     (val) => {
@@ -928,4 +1133,4 @@ const INFORMATION_NAV = [
   },
 ];
 
-export default NewTestingCenter;
+export default EditCenter;

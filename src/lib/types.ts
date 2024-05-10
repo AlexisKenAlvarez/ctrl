@@ -39,6 +39,7 @@ export type Database = {
         Row: {
           created_at: string
           id: number
+          name: string
           testing_center: number
           thumbnail: boolean
           url: string
@@ -46,6 +47,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: number
+          name: string
           testing_center: number
           thumbnail?: boolean
           url: string
@@ -53,6 +55,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: number
+          name?: string
           testing_center?: number
           thumbnail?: boolean
           url?: string
@@ -102,7 +105,7 @@ export type Database = {
           {
             foreignKeyName: "location_testing_center_fkey"
             columns: ["testing_center"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "testing_centers"
             referencedColumns: ["id"]
           },

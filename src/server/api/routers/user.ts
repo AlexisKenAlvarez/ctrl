@@ -1,11 +1,38 @@
+/* eslint-disable @typescript-eslint/no-misused-promises */
+import { getFileKey } from "@/lib/utils";
 import {
   createTRPCRouter,
   protectedProcedure,
   publicProcedure,
 } from "@/server/api/trpc";
 import { TRPCError } from "@trpc/server";
-import { parse } from "path";
 import { z } from "zod";
+import { utapi } from "@/server/uploadthing";
+
+const centerValues = z.object({
+  name: z.string().min(1),
+  province: z.string().min(1),
+  city: z.string().min(1),
+  region: z.string().min(1),
+  barangay: z.string().min(1),
+  zip: z.string().max(4).min(4),
+  landmark: z.string().min(1),
+  services: z.string().min(5),
+  facebook: z.string().url(),
+  contact: z.string().min(1).max(11),
+  google_map: z.string().nullish(),
+});
+
+const imagesObject = z.array(
+  z.object({
+    id: z.number(),
+    created_at: z.string(),
+    name: z.string(),
+    testing_center: z.number(),
+    thumbnail: z.boolean(),
+    url: z.string(),
+  }),
+);
 
 export const userRouter = createTRPCRouter({
   updateRole: publicProcedure
@@ -133,6 +160,7 @@ export const userRouter = createTRPCRouter({
         preview: z.string(),
         url: z.string(),
         thumbnail: z.boolean(),
+        name: z.string(),
       }),
     )
     .query(async ({ input, ctx }) => {
@@ -140,6 +168,7 @@ export const userRouter = createTRPCRouter({
         testing_center: input.testing_center_id,
         url: input.url,
         thumbnail: input.thumbnail,
+        name: input.name,
       });
 
       if (error) {
@@ -150,17 +179,276 @@ export const userRouter = createTRPCRouter({
         });
       }
     }),
-  getProducts: protectedProcedure
+  getCenters: protectedProcedure
     .input(
       z.object({
-        input: z.string(),
         status: z.enum(["all", "pending", "accepted", "rejected"]),
+        owner: z.string(),
+      }),
+    )
+    .query(async ({ input, ctx }) => {
+      if (input.status === "all") {
+        const { data, error } = await ctx.supabase
+          .from("testing_centers")
+          .select(
+            "*, location:locations(*), open_hour:open_hours(*), images(*)",
+          )
+          .eq("owner", input.owner);
+
+        if (error) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: error.message,
+          });
+        }
+
+        return data;
+      }
+      const { data, error } = await ctx.supabase
+        .from("testing_centers")
+        .select("*, location:locations(*), open_hour:open_hours(*), images(*)")
+        .eq("status", input.status);
+
+      if (error) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: error.message,
+        });
+      }
+
+      return data;
+    }),
+  getSingleCenter: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+      }),
+    )
+    .query(async ({ input, ctx }) => {
+      const { data, error } = await ctx.supabase
+        .from("testing_centers")
+        .select("*, location:locations(*), open_hour:open_hours(*), images(*)")
+        .eq("id", input.id)
+        .single();
+
+      if (error) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: error.message,
+        });
+      }
+
+      return data;
+    }),
+  updateCenter: protectedProcedure
+    .input(
+      z.object({
+        thumbnailChanged: z.boolean(),
+        centerId: z.string(),
+        old_open_hours: z.array(
+          z.object({
+            label: z.string().min(1),
+            checked: z.boolean(),
+            open: z.string().nullable(),
+            close: z.string().nullable(),
+          }),
+        ),
+        oldValues: centerValues,
+        old_thumbnail: z.string(),
+        newValues: centerValues,
+        new_open_hours: z.array(
+          z.object({
+            label: z.string().min(1),
+            checked: z.boolean(),
+            open: z.string().nullable(),
+            close: z.string().nullable(),
+          }),
+        ),
+        new_thumbnail: z.string(),
+        imageChanged: z.boolean(),
+        images: imagesObject,
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      const { data } = await ctx.supabase
+      try {
+        if (input.newValues.name !== input.oldValues.name) {
+          await ctx.supabase
+            .from("testing_centers")
+            .update({
+              name: input.newValues.name,
+            })
+            .eq("id", input.centerId);
+        }
+
+        if (input.newValues.province !== input.oldValues.province) {
+          await ctx.supabase
+            .from("locations")
+            .update({
+              province: input.newValues.province,
+            })
+            .eq("testing_center", input.centerId);
+        }
+
+        if (input.newValues.city !== input.oldValues.city) {
+          await ctx.supabase
+            .from("locations")
+            .update({
+              city: input.newValues.city,
+            })
+            .eq("testing_center", input.centerId);
+        }
+
+        if (input.newValues.region !== input.oldValues.region) {
+          await ctx.supabase
+            .from("locations")
+            .update({
+              region: input.newValues.region,
+            })
+            .eq("testing_center", input.centerId);
+        }
+
+        if (input.newValues.barangay !== input.oldValues.barangay) {
+          await ctx.supabase
+            .from("locations")
+            .update({
+              barangay: input.newValues.barangay,
+            })
+            .eq("testing_center", input.centerId);
+        }
+
+        if (input.newValues.zip !== input.oldValues.zip) {
+          await ctx.supabase
+            .from("locations")
+            .update({
+              zip: parseInt(input.newValues.zip),
+            })
+            .eq("testing_center", input.centerId);
+        }
+
+        if (input.newValues.landmark !== input.oldValues.landmark) {
+          await ctx.supabase
+            .from("locations")
+            .update({
+              landmark: input.newValues.landmark,
+            })
+            .eq("testing_center", input.centerId);
+        }
+
+        if (input.newValues.services !== input.oldValues.services) {
+          await ctx.supabase
+            .from("testing_centers")
+            .update({
+              services: input.newValues.services,
+            })
+            .eq("id", input.centerId);
+        }
+
+        if (input.newValues.facebook !== input.oldValues.facebook) {
+          await ctx.supabase
+            .from("testing_centers")
+            .update({
+              facebook: input.newValues.facebook,
+            })
+            .eq("id", input.centerId);
+        }
+
+        if (input.newValues.contact !== input.oldValues.contact) {
+          await ctx.supabase
+            .from("testing_centers")
+            .update({
+              contact: parseInt(input.newValues.contact),
+            })
+            .eq("id", input.centerId);
+        }
+
+        if (input.newValues.google_map !== input.oldValues.google_map) {
+          await ctx.supabase
+            .from("testing_centers")
+            .update({
+              google_map: input.newValues.google_map,
+            })
+            .eq("id", input.centerId);
+        }
+
+        if (
+          input.new_thumbnail !== input.old_thumbnail &&
+          input.thumbnailChanged &&
+          !input.imageChanged
+        ) {
+          await ctx.supabase
+            .from("images")
+            .update({
+              thumbnail: false,
+            })
+            .eq("testing_center", input.centerId)
+            .eq("name", input.old_thumbnail);
+
+          await ctx.supabase
+            .from("images")
+            .update({
+              thumbnail: true,
+            })
+            .eq("testing_center", input.centerId)
+            .eq("name", input.new_thumbnail);
+        }
+
+        if (input.imageChanged) {
+          input.images.forEach(async (image) => {
+            const fileKey = getFileKey(image.url);
+
+            await utapi.deleteFiles(fileKey!);
+          });
+
+          await ctx.supabase
+            .from("images")
+            .delete()
+            .eq("testing_center", input.centerId);
+        }
+
+        input.new_open_hours.forEach(async (hour, index) => {
+          if (hour.open !== input.old_open_hours[index]?.open) {
+            await ctx.supabase
+              .from("open_hours")
+              .update({
+                open_time: hour.open,
+                close_time: hour.close,
+              })
+              .eq("testing_center", input.centerId)
+              .eq("day", hour.label);
+          }
+        });
+      } catch (error) {
+        console.log(error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Error updating center",
+        });
+      }
+    }),
+  deleteCenter: protectedProcedure
+    .input(
+      z.object({
+        centerId: z.number(),
+        images: imagesObject,
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      input.images.forEach(async (image) => {
+        const fileKey = getFileKey(image.url);
+
+        await utapi.deleteFiles(fileKey!);
+      });
+
+      const { error } = await ctx.supabase
         .from("testing_centers")
-        .select("*, ")
-        .eq("status", input.status);
+        .delete()
+        .eq("id", input.centerId);
+
+      if (error) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: error.message,
+        });
+      }
     }),
 });

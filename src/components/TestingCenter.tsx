@@ -1,10 +1,11 @@
 "use client";
 
 import { Plus } from "lucide-react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Button } from "./ui/button";
 import { Separator } from "./ui/separator";
-import Link from 'next/link';
+import Image from "next/image";
+import { Pencil, Trash } from "lucide-react";
 
 import {
   Breadcrumb,
@@ -12,13 +13,53 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
 } from "@/components/ui/breadcrumb";
+import { api, type RouterOutputs } from "@/trpc/react";
+import { type CarouselApi } from "@/components/ui/carousel";
 
-const TestingCenter = () => {
-  const router = useRouter();
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
+import { useEffect, useState } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
+
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+
+const TestingCenter = ({
+  centersData,
+  owner,
+}: {
+  centersData: RouterOutputs["user"]["getCenters"];
+  owner: string;
+}) => {
+  const { data: centerData } = api.user.getCenters.useQuery(
+    {
+      owner,
+      status: "all",
+    },
+    {
+      initialData: centersData,
+    },
+  );
+
   return (
-    <div className="mx-auto flex w-full flex-1 flex-col">
-      <div className="sticky top-[5.8srem] z-10 w-full">
-        <div className="drop-shadow-md flex h-20 w-full items-center justify-between bg-white px-5 py-4">
+    <div className="mx-auto flex w-full flex-1 flex-col ">
+      <div className="sticky top-[5.8rem] z-10 w-full ">
+        <div className="flex  h-20 w-full items-center justify-between bg-white px-5 py-4 drop-shadow-md">
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>
@@ -28,9 +69,7 @@ const TestingCenter = () => {
           </Breadcrumb>
 
           <Link href={`/testing-center/new`}>
-            <Button
-              className="space-x-2 rounded-full bg-blue hover:bg-blue/80"
-            >
+            <Button className="space-x-2 rounded-full bg-blue hover:bg-blue/80">
               <Plus size={18} />
               <h1 className="">Add new </h1>
             </Button>
@@ -39,8 +78,165 @@ const TestingCenter = () => {
         <Separator />
       </div>
 
-      <div className="w-full flex-1 bg-white"></div>
+      <div className="flex w-full flex-1 flex-wrap  gap-4 bg-white p-5">
+        {centerData.map((item) => (
+          <div className="h-64 w-64" key={item.id}>
+            <div className="group  relative h-64 w-64 overflow-hidden rounded-lg border">
+              <ImageSlider imageData={item.images} centerId={item.id} />
+            </div>
+            <div className="mt-3">
+              <h1 className=" font-medium">{item.name}</h1>
+              <p className="text-sm opacity-70">
+                {item.location?.barangay}, {item.location?.city}{" "}
+                {item.location?.province}
+              </p>
+
+              <p
+                className={cn("text-sm capitalize", {
+                  "text-orange-500": item.status === "pending",
+                })}
+              >
+                {item.status}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
+  );
+};
+
+interface ImageType {
+  id: number;
+  url: string;
+  name: string
+  thumbnail: boolean;
+  created_at: string;
+  testing_center: number;
+}
+
+const ImageSlider = ({
+  imageData,
+  centerId,
+}: {
+  imageData: ImageType[];
+  centerId: number;
+}) => {
+
+  const deleteCenterMutation = api.user.deleteCenter.useMutation()
+  const [imageLoading, setImageLoading] = useState(true);
+  const [cApi, setApi] = useState<CarouselApi>();
+  const [current, setCurrent] = useState(0);
+
+  useEffect(() => {
+    if (!cApi) {
+      return;
+    }
+
+    setCurrent(cApi.selectedScrollSnap() + 1);
+
+    cApi.on("select", () => {
+      setCurrent(cApi.selectedScrollSnap() + 1);
+    });
+  }, [api]);
+
+  return (
+    <Carousel setApi={setApi}>
+      <CarouselContent>
+        {imageLoading && (
+          <Skeleton className="absolute left-0 top-0 h-64 w-full" />
+        )}
+        {imageData.map((image) => {
+          if (image.thumbnail) {
+            return (
+              <CarouselItem className="h-64 w-64" key={image.id}>
+                <Image
+                  onLoad={() => {
+                    setImageLoading(false);
+                  }}
+                  src={image.url}
+                  width={500}
+                  height={500}
+                  className="h-full w-full object-cover object-center"
+                  alt={image.id.toString()}
+                />
+              </CarouselItem>
+            );
+          }
+        })}
+
+        {imageData.map((image) => {
+          if (!image.thumbnail) {
+            return (
+              <CarouselItem className="h-64 w-64" key={image.id}>
+                <Image
+                  src={image.url}
+                  width={500}
+                  height={500}
+                  className="h-full w-full object-cover object-center"
+                  alt={image.id.toString()}
+                />
+              </CarouselItem>
+            );
+          }
+        })}
+      </CarouselContent>
+      <div className="pointer-events-none opacity-0 transition-all duration-100 ease-in-out group-hover:pointer-events-auto group-hover:opacity-100">
+        <CarouselPrevious className="absolute left-3 z-10" />
+        <CarouselNext className="absolute right-3 z-10" />
+      </div>
+      <div className="absolute left-0 top-2 flex w-full justify-between px-3">
+        <Link href={`/testing-center/edit/${centerId}`}>
+          <Button
+            className="h-8 w-5 shrink-0 rounded-full opacity-50 hover:opacity-100"
+            variant={"secondary"}
+          >
+            <Pencil size={14} className="absolute" />
+          </Button>
+        </Link>
+
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              className="relative h-8 w-5 shrink-0 rounded-full opacity-50 hover:opacity-100"
+              variant={"secondary"}
+            >
+              <Trash size={14} color="#ef4444" className="absolute" />
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. This action is destructive and will permanently delete this testing center from our servers.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={async () => {
+                await deleteCenterMutation.mutateAsync({
+                  centerId: centerId,
+                  images: imageData
+                })
+              }}>Continue</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
+      <div className="absolute bottom-3 left-0 right-0 mx-auto flex w-fit items-center gap-1">
+        {Array.from({ length: imageData.length }).map((_, index) => (
+          <div
+            className={cn(
+              "h-[5px] w-[5px] shrink-0 rounded-full bg-white  opacity-50",
+              {
+                "h-2 w-2 opacity-100": index + 1 === current,
+              },
+            )}
+            key={index}
+          ></div>
+        ))}
+      </div>
+    </Carousel>
   );
 };
 

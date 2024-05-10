@@ -28,7 +28,6 @@ export const ourFileRouter = {
       // const center_id = metadata.id;
       const url = file.url;
 
-
       try {
         if (preview === file.name) {
           await api.user.addImage({
@@ -36,6 +35,7 @@ export const ourFileRouter = {
             url,
             thumbnail: true,
             preview,
+            name: file.name,
           });
         } else {
           await api.user.addImage({
@@ -43,6 +43,7 @@ export const ourFileRouter = {
             url,
             thumbnail: false,
             preview,
+            name: file.name,
           });
         }
       } catch (error) {
