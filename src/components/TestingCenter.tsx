@@ -68,7 +68,7 @@ const TestingCenter = ({
 
       <div className="flex w-full flex-1 flex-wrap  gap-4 bg-white p-5">
         {centerData.map((item) => (
-          <div className="" key={item.id}>
+          <div className="h-64 w-64" key={item.id}>
             <div className="group  relative h-64 w-64 overflow-hidden rounded-lg border">
               <ImageSlider imageData={item.images} centerId={item.id} />
             </div>

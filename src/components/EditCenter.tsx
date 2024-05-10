@@ -12,7 +12,7 @@ import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { generateClientDropzoneAccept } from "uploadthing/client";
-import { z } from "zod";
+import { set, z } from "zod";
 import { useRouter } from "next/navigation";
 
 interface LocationInterface {
@@ -245,6 +245,7 @@ const EditCenter = ({
     setImages([]);
     if (acceptedFiles.length === 5) {
       acceptedFiles.forEach((file) => {
+        setPreviewImage(null);
         const imageUrl = URL.createObjectURL(file);
 
         setImages((prev) => [...prev, { url: imageUrl, name: file.name }]);
@@ -317,7 +318,33 @@ const EditCenter = ({
   useEffect(() => {
     void (async () => {
       const regionData = await regions();
-      setLocationData((prev) => ({ ...prev, regions: regionData }));
+
+      const regionCode = regionData.find(
+        (data: { region_name: string }) =>
+          data.region_name === center.location?.region,
+      ).region_code;
+      const provinceData = await provinces(regionCode);
+
+      const provinceCode = await provinceData.find(
+        (data: { province_name: string }) =>
+          data.province_name === center.location?.province,
+      ).province_code;
+
+      const cityData = await cities(provinceCode);
+      const cityCode = cityData.find(
+        (data: { city_name: string }) =>
+          data.city_name === center.location?.city,
+      ).city_code;
+
+      const barangayData = await barangays(cityCode);
+
+      setLocationData((prev) => ({
+        ...prev,
+        barangays: barangayData,
+        cities: cityData,
+        provinces: provinceData,
+        regions: regionData,
+      }));
     })();
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -398,7 +425,6 @@ const EditCenter = ({
             )}
             disabled={!form.formState.isValid}
             onClick={form.handleSubmit(async (values) => {
-
               console.log("Old hour", ogDaysValue);
               console.log("New hour", daysValue);
               setDebounce(true);
@@ -427,11 +453,32 @@ const EditCenter = ({
                   new_open_hours: daysValue,
                   new_thumbnail: thumbnail,
                   thumbnailChanged: thumbnail !== "",
+                  imageChanged: previewImage !== null,
+                  images: center.images,
                 });
 
-                await utils.user.getCenters.invalidate();
-                router.push("/testing-center");
+                if (previewImage !== null) {
+                  await startUpload(files, {
+                    preview: previewImage,
+                    testing_center_id: parseInt(centerId),
+                  })
+                }
+
+                form.setValue("name", values.name);
+                form.setValue("region", values.region);
+                form.setValue("province", values.province);
+                form.setValue("city", values.city);
+                form.setValue("barangay", values.barangay);
+                form.setValue("zip", values.zip);
+                form.setValue("landmark", values.landmark);
+                form.setValue("services", values.services);
+                form.setValue("facebook", values.facebook);
+                form.setValue("contact", values.contact);
+                form.setValue("google_map", values.google_map);
+
+                window.location.href = "/testing-center";
                 console.log("Edit success");
+                await utils.user.getCenters.invalidate();
               } catch (error) {
                 console.log(error);
               }
@@ -548,42 +595,86 @@ const EditCenter = ({
 
                     <div className="mx-auto mt-5 w-fit">
                       <div className="flex flex-row-reverse gap-2">
-                        {center.images.map((file) => {
-                          if (previewImage === null) {
-                            setPreviewImage(file.name);
-                          }
+                        {files.length !== 5 &&
+                          center.images.map((file) => {
+                            if (previewImage === null) {
+                              setPreviewImage(file.name);
+                            }
 
-                          return (
-                            <button
-                              key={file.name}
-                              onClick={(e) => {
-                                e.preventDefault();
-                                setPreviewImage(file.name);
-                              }}
-                              className="relative"
-                            >
-                              <Image
-                                src={file.url}
-                                alt={file.name}
-                                width={500}
-                                height={500}
-                                className={cn(
-                                  "block h-16 w-16 border-2 border-black/10 object-cover sm:h-28 sm:w-28",
-                                  {
-                                    "border-2 border-blue":
-                                      previewImage === file.name,
-                                  },
+                            return (
+                              <button
+                                key={file.name}
+                                onClick={(e) => {
+                                  e.preventDefault();
+
+                                  if (thumbnail === "") {
+                                    setThumbnail(file.name);
+                                  } else {
+                                    setPreviewImage(file.name);
+                                  }
+                                }}
+                                className="relative"
+                              >
+                                <Image
+                                  src={file.url}
+                                  alt={file.name}
+                                  width={500}
+                                  height={500}
+                                  className={cn(
+                                    "block h-16 w-16 border-2 border-black/10 object-cover sm:h-28 sm:w-28",
+                                    {
+                                      "border-2 border-blue":
+                                        previewImage === file.name,
+                                    },
+                                  )}
+                                />
+
+                                {file.name === previewImage && (
+                                  <div className="absolute bottom-0 w-full bg-blue/80 py-1 text-center text-[8px] text-white sm:text-sm">
+                                    Thumbnail
+                                  </div>
                                 )}
-                              />
+                              </button>
+                            );
+                          })}
 
-                              {file.name === previewImage && (
-                                <div className="sm:text-sn absolute bottom-0 w-full bg-blue/80 py-1 text-center text-[8px] text-white">
-                                  Thumbnail
-                                </div>
-                              )}
-                            </button>
-                          );
-                        })}
+                        {files.length === 5 &&
+                          images.map((file) => {
+                            if (previewImage === null) {
+                              setPreviewImage(file.name);
+                            }
+
+                            return (
+                              <button
+                                key={file.name}
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  setPreviewImage(file.name);
+                                }}
+                                className="relative"
+                              >
+                                <Image
+                                  src={file.url}
+                                  alt={file.name}
+                                  width={500}
+                                  height={500}
+                                  className={cn(
+                                    "block h-16 w-16 border-2 border-black/10 object-cover sm:h-28 sm:w-28",
+                                    {
+                                      "border-2 border-blue":
+                                        previewImage === file.name,
+                                    },
+                                  )}
+                                />
+
+                                {file.name === previewImage && (
+                                  <div className="absolute bottom-0 w-full bg-blue/80 py-1 text-center text-[8px] text-white sm:text-sm">
+                                    Thumbnail
+                                  </div>
+                                )}
+                              </button>
+                            );
+                          })}
                       </div>
                     </div>
                   </div>
@@ -711,8 +802,8 @@ const EditCenter = ({
                                 key={field.name}
                                 onValueChange={async (value) => {
                                   form.setValue("province", "");
-                                  form.resetField("city");
-                                  form.resetField("barangay");
+                                  form.setValue("city", "");
+                                  form.setValue("barangay", "");
 
                                   setLocationData((prev) => ({
                                     ...prev,
@@ -772,8 +863,8 @@ const EditCenter = ({
                                 defaultValue=""
                                 key={field.name}
                                 onValueChange={async (value) => {
-                                  form.resetField("city");
-                                  form.resetField("barangay");
+                                  form.setValue("city", "");
+                                  form.setValue("barangay", "");
 
                                   console.log(field.value);
                                   setLocationData((prev) => ({
@@ -838,7 +929,7 @@ const EditCenter = ({
                               <Select
                                 value=""
                                 onValueChange={async (value) => {
-                                  form.resetField("barangay");
+                                  form.setValue("barangay", "");
 
                                   const cityName = locationData.cities.find(
                                     (val) => {

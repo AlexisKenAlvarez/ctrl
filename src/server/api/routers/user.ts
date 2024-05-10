@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-misused-promises */
+import { getFileKey } from "@/lib/utils";
 import {
   createTRPCRouter,
   protectedProcedure,
@@ -6,6 +7,7 @@ import {
 } from "@/server/api/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
+import { utapi } from "@/server/uploadthing";
 
 const centerValues = z.object({
   name: z.string().min(1),
@@ -252,6 +254,15 @@ export const userRouter = createTRPCRouter({
           }),
         ),
         new_thumbnail: z.string(),
+        imageChanged: z.boolean(),
+        images: z.array(z.object({
+          id: z.number(),
+          created_at: z.string(),
+          name: z.string(),
+          testing_center: z.number(),
+          thumbnail: z.boolean(),
+          url: z.string()
+        }))
       }),
     )
     .mutation(async ({ input, ctx }) => {
@@ -357,14 +368,36 @@ export const userRouter = createTRPCRouter({
 
         if (
           input.new_thumbnail !== input.old_thumbnail &&
-          input.thumbnailChanged
+          input.thumbnailChanged && !input.imageChanged
         ) {
+          await ctx.supabase
+            .from("images")
+            .update({
+              thumbnail: false,
+            })
+            .eq("testing_center", input.centerId)
+            .eq("name", input.old_thumbnail)
+
           await ctx.supabase
             .from("images")
             .update({
               thumbnail: true,
             })
-            .eq("testing_center", input.centerId);
+            .eq("testing_center", input.centerId)
+            .eq("name", input.new_thumbnail)
+        }
+
+        if (input.imageChanged) {
+          input.images.forEach(async (image) => {
+            const fileKey = getFileKey(image.url)
+
+            await utapi.deleteFiles(fileKey!)
+          })
+
+          await ctx.supabase
+            .from("images")
+            .delete()
+            .eq("testing_center", input.centerId)
         }
 
         input.new_open_hours.forEach(async (hour, index) => {
