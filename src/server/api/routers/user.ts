@@ -452,4 +452,27 @@ export const userRouter = createTRPCRouter({
         });
       }
     }),
+  changeCenterStatus: protectedProcedure
+    .input(
+      z.object({
+        centerId: z.number(),
+        deactivated: z.boolean()
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      const { error } = await ctx.supabase
+        .from("testing_centers")
+        .update({ deactivated: input.deactivated })
+        .eq("id", input.centerId)
+        .single();
+
+      if (error) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: error.message,
+        });
+      }
+
+      return true
+    }),
 });

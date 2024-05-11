@@ -147,6 +147,7 @@ export type Database = {
         Row: {
           contact: number
           created_at: string
+          deactivated: boolean
           facebook: string
           google_map: string | null
           id: number
@@ -160,6 +161,7 @@ export type Database = {
         Insert: {
           contact: number
           created_at?: string
+          deactivated?: boolean
           facebook: string
           google_map?: string | null
           id?: number
@@ -173,6 +175,7 @@ export type Database = {
         Update: {
           contact?: number
           created_at?: string
+          deactivated?: boolean
           facebook?: string
           google_map?: string | null
           id?: number
@@ -233,7 +236,11 @@ export type Database = {
         | "friday"
         | "saturday"
         | "sunday"
-      testing_center_status_enum: "pending" | "accepted" | "rejected"
+      testing_center_status_enum:
+        | "pending"
+        | "accepted"
+        | "rejected"
+        | "deleted"
       user_role_enum: "user" | "testing_center" | "admin"
     }
     CompositeTypes: {
