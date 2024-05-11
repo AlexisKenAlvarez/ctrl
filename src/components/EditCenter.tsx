@@ -461,7 +461,7 @@ const EditCenter = ({
                   await startUpload(files, {
                     preview: previewImage,
                     testing_center_id: parseInt(centerId),
-                  })
+                  });
                 }
 
                 form.setValue("name", values.name);
@@ -597,20 +597,16 @@ const EditCenter = ({
                       <div className="flex flex-row-reverse gap-2">
                         {files.length !== 5 &&
                           center.images.map((file) => {
-                            if (previewImage === null) {
-                              setPreviewImage(file.name);
-                            }
-
                             return (
                               <button
                                 key={file.name}
                                 onClick={(e) => {
                                   e.preventDefault();
 
-                                  if (thumbnail === "") {
+                                  if (!file.thumbnail) {
                                     setThumbnail(file.name);
                                   } else {
-                                    setPreviewImage(file.name);
+                                    setThumbnail("");
                                   }
                                 }}
                                 className="relative"
@@ -624,12 +620,22 @@ const EditCenter = ({
                                     "block h-16 w-16 border-2 border-black/10 object-cover sm:h-28 sm:w-28",
                                     {
                                       "border-2 border-blue":
-                                        previewImage === file.name,
+                                        file.thumbnail && thumbnail === "",
+                                    },
+                                    {
+                                      "p border-2 border-blue":
+                                        file.name === thumbnail,
                                     },
                                   )}
                                 />
 
-                                {file.name === previewImage && (
+                                {file.thumbnail && thumbnail === "" && (
+                                  <div className="absolute bottom-0 w-full bg-blue/80 py-1 text-center text-[8px] text-white sm:text-sm">
+                                    Thumbnail
+                                  </div>
+                                )}
+
+                                {file.name === thumbnail && (
                                   <div className="absolute bottom-0 w-full bg-blue/80 py-1 text-center text-[8px] text-white sm:text-sm">
                                     Thumbnail
                                   </div>

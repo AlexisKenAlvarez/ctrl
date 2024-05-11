@@ -5,7 +5,18 @@ import Link from "next/link";
 import { Button } from "./ui/button";
 import { Separator } from "./ui/separator";
 import Image from "next/image";
-import { Pencil, Trash } from "lucide-react";
+import { EllipsisVertical } from "lucide-react";
+
+import { AspectRatio } from "@/components/ui/aspect-ratio";
+
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 import {
   Breadcrumb,
@@ -78,12 +89,14 @@ const TestingCenter = ({
         <Separator />
       </div>
 
-      <div className="flex w-full flex-1 flex-wrap  gap-4 bg-white p-5">
+      <div className="grid  w-fit grid-cols-2 gap-4 bg-white p-5  sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5">
         {centerData.map((item) => (
-          <div className="h-64 w-64" key={item.id}>
-            <div className="group  relative h-64 w-64 overflow-hidden rounded-lg border">
-              <ImageSlider imageData={item.images} centerId={item.id} />
-            </div>
+          <div className="h-auto" key={item.id}>
+            <AspectRatio ratio={1 / 1}>
+              <div className="group relative h-fit w-full auto-rows-max overflow-hidden rounded-lg">
+                <ImageSlider imageData={item.images} centerId={item.id} />
+              </div>
+            </AspectRatio>
             <div className="mt-3">
               <h1 className=" font-medium">{item.name}</h1>
               <p className="text-sm opacity-70">
@@ -109,7 +122,7 @@ const TestingCenter = ({
 interface ImageType {
   id: number;
   url: string;
-  name: string
+  name: string;
   thumbnail: boolean;
   created_at: string;
   testing_center: number;
@@ -122,8 +135,8 @@ const ImageSlider = ({
   imageData: ImageType[];
   centerId: number;
 }) => {
-
-  const deleteCenterMutation = api.user.deleteCenter.useMutation()
+  const [menuOpen, setMenuOpen] = useState(false);
+  const deleteCenterMutation = api.user.deleteCenter.useMutation();
   const [imageLoading, setImageLoading] = useState(true);
   const [cApi, setApi] = useState<CarouselApi>();
   const [current, setCurrent] = useState(0);
@@ -138,28 +151,32 @@ const ImageSlider = ({
     cApi.on("select", () => {
       setCurrent(cApi.selectedScrollSnap() + 1);
     });
-  }, [api]);
+  }, [cApi]);
 
   return (
-    <Carousel setApi={setApi}>
-      <CarouselContent>
+    <Carousel setApi={setApi} className="h-full ">
+      <CarouselContent className="">
         {imageLoading && (
-          <Skeleton className="absolute left-0 top-0 h-64 w-full" />
+          <AspectRatio ratio={1 / 1} className=" ">
+            <Skeleton className="absolute left-0 top-0 h-64 w-full" />
+          </AspectRatio>
         )}
         {imageData.map((image) => {
           if (image.thumbnail) {
             return (
-              <CarouselItem className="h-64 w-64" key={image.id}>
-                <Image
-                  onLoad={() => {
-                    setImageLoading(false);
-                  }}
-                  src={image.url}
-                  width={500}
-                  height={500}
-                  className="h-full w-full object-cover object-center"
-                  alt={image.id.toString()}
-                />
+              <CarouselItem className="h-full" key={image.id}>
+                <AspectRatio ratio={1 / 1} className=" ">
+                  <Image
+                    onLoad={() => {
+                      setImageLoading(false);
+                    }}
+                    src={image.url}
+                    width={900}
+                    height={900}
+                    className="h-full w-full object-cover object-center"
+                    alt={image.id.toString()}
+                  />
+                </AspectRatio>
               </CarouselItem>
             );
           }
@@ -169,13 +186,15 @@ const ImageSlider = ({
           if (!image.thumbnail) {
             return (
               <CarouselItem className="h-64 w-64" key={image.id}>
-                <Image
-                  src={image.url}
-                  width={500}
-                  height={500}
-                  className="h-full w-full object-cover object-center"
-                  alt={image.id.toString()}
-                />
+                <AspectRatio ratio={1 / 1} className=" ">
+                  <Image
+                    src={image.url}
+                    width={500}
+                    height={500}
+                    className="h-full w-full object-cover object-center"
+                    alt={image.id.toString()}
+                  />
+                </AspectRatio>
               </CarouselItem>
             );
           }
@@ -185,49 +204,26 @@ const ImageSlider = ({
         <CarouselPrevious className="absolute left-3 z-10" />
         <CarouselNext className="absolute right-3 z-10" />
       </div>
-      <div className="absolute left-0 top-2 flex w-full justify-between px-3">
-        <Link href={`/testing-center/edit/${centerId}`}>
-          <Button
-            className="h-8 w-5 shrink-0 rounded-full opacity-50 hover:opacity-100"
-            variant={"secondary"}
-          >
-            <Pencil size={14} className="absolute" />
-          </Button>
-        </Link>
-
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button
-              className="relative h-8 w-5 shrink-0 rounded-full opacity-50 hover:opacity-100"
-              variant={"secondary"}
-            >
-              <Trash size={14} color="#ef4444" className="absolute" />
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-              <AlertDialogDescription>
-                This action cannot be undone. This action is destructive and will permanently delete this testing center from our servers.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={async () => {
-                await deleteCenterMutation.mutateAsync({
-                  centerId: centerId,
-                  images: imageData
-                })
-              }}>Continue</AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+      <div className="absolute left-0 top-2 flex w-full justify-end  px-3">
+        <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+          <DropdownMenuTrigger className="rounded-full bg-white px-1 py-1 opacity-50 transition-all duration-300 ease-in-out hover:opacity-100">
+            {" "}
+            <EllipsisVertical size={20} />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <Link href={`/testing-center/edit/${centerId}`}>
+              <DropdownMenuItem>Edit</DropdownMenuItem>
+            </Link>
+            <DropdownMenuItem>Deactivate</DropdownMenuItem>
+            <DropdownMenuItem>Delete</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
       <div className="absolute bottom-3 left-0 right-0 mx-auto flex w-fit items-center gap-1">
         {Array.from({ length: imageData.length }).map((_, index) => (
           <div
             className={cn(
-              "h-[5px] w-[5px] shrink-0 rounded-full bg-white  opacity-50",
+              "h-[5px] w-[5px] shrink-0 rounded-full bg-white  opacity-50 transition-all duration-300 ease-in-out",
               {
                 "h-2 w-2 opacity-100": index + 1 === current,
               },

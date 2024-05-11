@@ -83,6 +83,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { api } from "@/trpc/react";
 import { supabase } from "supabase/supabaseClient";
 import SelectTime from "./SelectTime";
+import { useRouter } from "next/navigation";
 
 interface DaysType {
   label: string;
@@ -97,7 +98,7 @@ interface ImagesType {
 }
 
 const NewTestingCenter = () => {
-  const user = supabase.auth.getSession();
+  const user = supabase.auth.getSession();  
 
   const uploadTestingCenterMutation = api.user.addTestingCenter.useMutation();
   const [locationData, setLocationData] = useState<LocationInterface>({
@@ -111,6 +112,7 @@ const NewTestingCenter = () => {
   const [files, setFiles] = useState<File[]>([]);
   const [images, setImages] = useState<ImagesType[]>([]);
   const [debounce, setDebounce] = useState(false);
+  const router = useRouter()
 
   const [daysValue, setDaysValue] = useState<DaysType[]>([
     {
@@ -302,6 +304,8 @@ const NewTestingCenter = () => {
                 form.reset();
                 setImages([]);
                 setFiles([]);
+
+                router.refresh()
               } catch (error) {
                 console.log(error);
               }

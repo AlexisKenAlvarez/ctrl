@@ -193,7 +193,8 @@ export const userRouter = createTRPCRouter({
           .select(
             "*, location:locations(*), open_hour:open_hours(*), images(*)",
           )
-          .eq("owner", input.owner);
+          .eq("owner", input.owner)
+          .order("created_at", { ascending: false });
 
         if (error) {
           throw new TRPCError({
