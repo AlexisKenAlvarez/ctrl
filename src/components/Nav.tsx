@@ -35,7 +35,7 @@ const Nav = ({
     <nav className="sticky left-0 top-0 z-50 mx-auto w-full bg-white">
       <nav className="mx-auto w-full p-5">
         <div className={cn("mx-auto flex items-center justify-between", {
-          "max-w-screen-xl": path === "labs",
+          "max-w-screen-xl px-16 2xl:px-0": path === "labs",
         })}>
           <Link href="/">
             <Image
