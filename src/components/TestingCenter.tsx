@@ -74,7 +74,7 @@ const TestingCenter = ({
             </BreadcrumbList>
           </Breadcrumb>
 
-          <Link href={`/testing-center/new`}>
+          <Link href={`/testing-lab/new`}>
             <Button className="space-x-2 rounded-full bg-blue hover:bg-blue/80">
               <Plus size={18} />
               <h1 className="">Add new </h1>
@@ -91,7 +91,7 @@ const TestingCenter = ({
               <div className="group relative h-fit w-full auto-rows-max overflow-hidden rounded-lg">
                 <ImageSlider
                   imageData={item.images}
-                  centerId={item.id}
+                  labId={item.id}
                   deactivated={item.deactivated}
                 />
               </div>
@@ -135,11 +135,11 @@ interface ImageType {
 
 const ImageSlider = ({
   imageData,
-  centerId,
+  labId,
   deactivated,
 }: {
   imageData: ImageType[];
-  centerId: number;
+  labId: number;
   deactivated: boolean;
 }) => {
   const [toDelete, setToDelete] = useState<number | null>(null);
@@ -224,13 +224,16 @@ const ImageSlider = ({
               <EllipsisVertical size={20} />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <Link href={`/testing-center/edit/${centerId}`}>
+              <Link href={`/labs/${labId}`}>
+                <DropdownMenuItem>View</DropdownMenuItem>
+              </Link>
+              <Link href={`/testing-lab/edit/${labId}`}>
                 <DropdownMenuItem>Edit</DropdownMenuItem>
               </Link>
-              <DropdownMenuItem onClick={() => setToDeactivate(centerId)}>
+              <DropdownMenuItem onClick={() => setToDeactivate(labId)}>
                 {deactivated ? "Reactivate" : "Deactivate"}
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setToDelete(centerId)}>
+              <DropdownMenuItem onClick={() => setToDelete(labId)}>
                 Delete
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -256,7 +259,9 @@ const ImageSlider = ({
           <DialogHeader>
             <DialogTitle>Are you absolutely sure?</DialogTitle>
             <DialogDescription>
-              {deactivated ? "This will reactive your testing lab and will be visible again to users." : "This will remove your testing lab into the list of active centers and will not be visible to users until you reactivate it."}
+              {deactivated
+                ? "This will reactive your testing lab and will be visible again to users."
+                : "This will remove your testing lab into the list of active centers and will not be visible to users until you reactivate it."}
               <div className="mt-4 flex justify-end gap-2  ">
                 <Button variant="secondary">Cancel</Button>
 
@@ -264,7 +269,7 @@ const ImageSlider = ({
                   className="hover:bg-blue"
                   onClick={async () => {
                     await changeStatusMutation.mutateAsync({
-                      centerId,
+                      labId,
                       deactivated: !deactivated,
                     });
 
@@ -296,11 +301,11 @@ const ImageSlider = ({
                   className="hover:bg-blue"
                   onClick={async () => {
                     await deleteCenterMutation.mutateAsync({
-                      centerId: centerId,
+                      labId: labId,
                       images: imageData,
                     });
 
-                    setToDelete(null)
+                    setToDelete(null);
                     await utils.user.getCenters.invalidate();
                   }}
                 >

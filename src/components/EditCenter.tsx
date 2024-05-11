@@ -99,10 +99,10 @@ interface ImagesType {
 
 const EditCenter = ({
   centerData,
-  centerId,
+  labId,
 }: {
   centerData: RouterOutputs["user"]["getSingleCenter"];
-  centerId: string;
+  labId: string;
 }) => {
   const user = supabase.auth.getSession();
   const router = useRouter();
@@ -199,7 +199,7 @@ const EditCenter = ({
   const { data: center, isFetched: centerFetched } =
     api.user.getSingleCenter.useQuery(
       {
-        id: centerId,
+        id: labId,
       },
       {
         initialData: centerData,
@@ -405,7 +405,7 @@ const EditCenter = ({
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>
-                <BreadcrumbLink href="/testing-center">
+                <BreadcrumbLink href="/testing-lab">
                   Dashboard
                 </BreadcrumbLink>
               </BreadcrumbItem>
@@ -430,7 +430,7 @@ const EditCenter = ({
               setDebounce(true);
               try {
                 await editCenterMutation.mutateAsync({
-                  centerId: centerId,
+                  labId: labId,
                   oldValues: {
                     name: center.name,
                     province: center.location!.province,
@@ -460,7 +460,7 @@ const EditCenter = ({
                 if (previewImage !== null) {
                   await startUpload(files, {
                     preview: previewImage,
-                    testing_center_id: parseInt(centerId),
+                    testing_center_id: parseInt(labId),
                   });
                 }
 
@@ -476,7 +476,7 @@ const EditCenter = ({
                 form.setValue("contact", values.contact);
                 form.setValue("google_map", values.google_map);
 
-                window.location.href = "/testing-center";
+                window.location.href = "/testing-lab";
                 console.log("Edit success");
                 await utils.user.getCenters.invalidate();
               } catch (error) {

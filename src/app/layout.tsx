@@ -45,7 +45,6 @@ export default async function RootLayout({
             ) : (
               <div className="flex flex-1 flex-col">{children}</div>
             )}
-            
           </div>
         </TRPCReactProvider>
       </body>

@@ -223,29 +223,52 @@ export const userRouter = createTRPCRouter({
     .input(
       z.object({
         id: z.string(),
+        type: z.enum(["pending", "accepted", "rejected", "deleted"]).nullish(),
       }),
     )
     .query(async ({ input, ctx }) => {
-      const { data, error } = await ctx.supabase
-        .from("testing_centers")
-        .select("*, location:locations(*), open_hour:open_hours(*), images(*)")
-        .eq("id", input.id)
-        .single();
+      if (input.type) {
+        const { data, error } = await ctx.supabase
+          .from("testing_centers")
+          .select(
+            "*, location:locations(*), open_hour:open_hours(*), images(*)",
+          )
+          .eq("id", input.id)
+          .eq("status", input.type)
+          .single();
 
-      if (error) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error.message,
-        });
+        if (error) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: error.message,
+          });
+        }
+
+        return data;
+      } else {
+        const { data, error } = await ctx.supabase
+          .from("testing_centers")
+          .select(
+            "*, location:locations(*), open_hour:open_hours(*), images(*)",
+          )
+          .eq("id", input.id)
+          .single();
+
+        if (error) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: error.message,
+          });
+        }
+
+        return data;
       }
-
-      return data;
     }),
   updateCenter: protectedProcedure
     .input(
       z.object({
         thumbnailChanged: z.boolean(),
-        centerId: z.string(),
+        labId: z.string(),
         old_open_hours: z.array(
           z.object({
             label: z.string().min(1),
@@ -278,7 +301,7 @@ export const userRouter = createTRPCRouter({
             .update({
               name: input.newValues.name,
             })
-            .eq("id", input.centerId);
+            .eq("id", input.labId);
         }
 
         if (input.newValues.province !== input.oldValues.province) {
@@ -287,7 +310,7 @@ export const userRouter = createTRPCRouter({
             .update({
               province: input.newValues.province,
             })
-            .eq("testing_center", input.centerId);
+            .eq("testing_center", input.labId);
         }
 
         if (input.newValues.city !== input.oldValues.city) {
@@ -296,7 +319,7 @@ export const userRouter = createTRPCRouter({
             .update({
               city: input.newValues.city,
             })
-            .eq("testing_center", input.centerId);
+            .eq("testing_center", input.labId);
         }
 
         if (input.newValues.region !== input.oldValues.region) {
@@ -305,7 +328,7 @@ export const userRouter = createTRPCRouter({
             .update({
               region: input.newValues.region,
             })
-            .eq("testing_center", input.centerId);
+            .eq("testing_center", input.labId);
         }
 
         if (input.newValues.barangay !== input.oldValues.barangay) {
@@ -314,7 +337,7 @@ export const userRouter = createTRPCRouter({
             .update({
               barangay: input.newValues.barangay,
             })
-            .eq("testing_center", input.centerId);
+            .eq("testing_center", input.labId);
         }
 
         if (input.newValues.zip !== input.oldValues.zip) {
@@ -323,7 +346,7 @@ export const userRouter = createTRPCRouter({
             .update({
               zip: parseInt(input.newValues.zip),
             })
-            .eq("testing_center", input.centerId);
+            .eq("testing_center", input.labId);
         }
 
         if (input.newValues.landmark !== input.oldValues.landmark) {
@@ -332,7 +355,7 @@ export const userRouter = createTRPCRouter({
             .update({
               landmark: input.newValues.landmark,
             })
-            .eq("testing_center", input.centerId);
+            .eq("testing_center", input.labId);
         }
 
         if (input.newValues.services !== input.oldValues.services) {
@@ -341,7 +364,7 @@ export const userRouter = createTRPCRouter({
             .update({
               services: input.newValues.services,
             })
-            .eq("id", input.centerId);
+            .eq("id", input.labId);
         }
 
         if (input.newValues.facebook !== input.oldValues.facebook) {
@@ -350,7 +373,7 @@ export const userRouter = createTRPCRouter({
             .update({
               facebook: input.newValues.facebook,
             })
-            .eq("id", input.centerId);
+            .eq("id", input.labId);
         }
 
         if (input.newValues.contact !== input.oldValues.contact) {
@@ -359,7 +382,7 @@ export const userRouter = createTRPCRouter({
             .update({
               contact: parseInt(input.newValues.contact),
             })
-            .eq("id", input.centerId);
+            .eq("id", input.labId);
         }
 
         if (input.newValues.google_map !== input.oldValues.google_map) {
@@ -368,7 +391,7 @@ export const userRouter = createTRPCRouter({
             .update({
               google_map: input.newValues.google_map,
             })
-            .eq("id", input.centerId);
+            .eq("id", input.labId);
         }
 
         if (
@@ -381,7 +404,7 @@ export const userRouter = createTRPCRouter({
             .update({
               thumbnail: false,
             })
-            .eq("testing_center", input.centerId)
+            .eq("testing_center", input.labId)
             .eq("name", input.old_thumbnail);
 
           await ctx.supabase
@@ -389,7 +412,7 @@ export const userRouter = createTRPCRouter({
             .update({
               thumbnail: true,
             })
-            .eq("testing_center", input.centerId)
+            .eq("testing_center", input.labId)
             .eq("name", input.new_thumbnail);
         }
 
@@ -403,7 +426,7 @@ export const userRouter = createTRPCRouter({
           await ctx.supabase
             .from("images")
             .delete()
-            .eq("testing_center", input.centerId);
+            .eq("testing_center", input.labId);
         }
 
         input.new_open_hours.forEach(async (hour, index) => {
@@ -414,7 +437,7 @@ export const userRouter = createTRPCRouter({
                 open_time: hour.open,
                 close_time: hour.close,
               })
-              .eq("testing_center", input.centerId)
+              .eq("testing_center", input.labId)
               .eq("day", hour.label);
           }
         });
@@ -429,7 +452,7 @@ export const userRouter = createTRPCRouter({
   deleteCenter: protectedProcedure
     .input(
       z.object({
-        centerId: z.number(),
+        labId: z.number(),
         images: imagesObject,
       }),
     )
@@ -443,7 +466,7 @@ export const userRouter = createTRPCRouter({
       const { error } = await ctx.supabase
         .from("testing_centers")
         .delete()
-        .eq("id", input.centerId);
+        .eq("id", input.labId);
 
       if (error) {
         throw new TRPCError({
@@ -455,15 +478,15 @@ export const userRouter = createTRPCRouter({
   changeCenterStatus: protectedProcedure
     .input(
       z.object({
-        centerId: z.number(),
-        deactivated: z.boolean()
+        labId: z.number(),
+        deactivated: z.boolean(),
       }),
     )
     .mutation(async ({ input, ctx }) => {
       const { error } = await ctx.supabase
         .from("testing_centers")
         .update({ deactivated: input.deactivated })
-        .eq("id", input.centerId)
+        .eq("id", input.labId)
         .single();
 
       if (error) {
@@ -473,6 +496,6 @@ export const userRouter = createTRPCRouter({
         });
       }
 
-      return true
+      return true;
     }),
 });

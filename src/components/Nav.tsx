@@ -16,6 +16,8 @@ import { supabase } from "supabase/supabaseClient";
 import { useRouter } from "next/navigation";
 import { Separator } from "./ui/separator";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
 
 const Nav = ({
   isLoggedIn,
@@ -25,10 +27,16 @@ const Nav = ({
   role: "user" | "testing_center" | "admin";
 }) => {
   const router = useRouter();
+  const pathname = usePathname().split("/");
+  
+  const path = pathname[1];
+  
   return (
     <nav className="sticky left-0 top-0 z-50 mx-auto w-full bg-white">
       <nav className="mx-auto w-full p-5">
-        <div className="mx-auto flex items-center justify-between">
+        <div className={cn("mx-auto flex items-center justify-between", {
+          "max-w-screen-xl": path === "labs",
+        })}>
           <Link href="/">
             <Image
               alt="Logo"
@@ -52,7 +60,7 @@ const Nav = ({
                 <DropdownMenuSeparator />
                 {role === "testing_center" && (
                   <DropdownMenuItem asChild>
-                    <Link href="/testing-center">Dashboard</Link>
+                    <Link href="/testing-lab">Dashboard</Link>
                   </DropdownMenuItem>
                 )}
 

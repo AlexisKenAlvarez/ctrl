@@ -267,7 +267,7 @@ const NewTestingCenter = () => {
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>
-                <BreadcrumbLink href="/testing-center">
+                <BreadcrumbLink href="/testing-lab">
                   Dashboard
                 </BreadcrumbLink>
               </BreadcrumbItem>
