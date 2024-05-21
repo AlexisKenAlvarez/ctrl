@@ -97,8 +97,8 @@ const TestingCenter = ({
               </div>
             </AspectRatio>
             <div className="mt-3">
-              <h1 className=" font-medium">{item.name}</h1>
-              <p className="text-sm opacity-70">
+              <h1 className=" text-sm font-medium sm:text-base">{item.name}</h1>
+              <p className="text-xs opacity-70 sm:text-sm">
                 {item.location?.barangay}, {item.location?.city}{" "}
                 {item.location?.province}
               </p>

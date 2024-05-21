@@ -396,7 +396,7 @@ const EditCenter = ({
         }
       }),
     );
-  }, [centerFetched, center.open_hour]);
+  }, [centerFetched, center?.open_hour]);
 
   return (
     <div className="overflow relative mx-auto flex w-full flex-1 flex-col">

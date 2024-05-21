@@ -143,6 +143,48 @@ export type Database = {
           },
         ]
       }
+      reviews: {
+        Row: {
+          author: string
+          created_at: string
+          id: number
+          rating: number
+          testing_center: number
+          text: string
+        }
+        Insert: {
+          author?: string
+          created_at?: string
+          id?: number
+          rating: number
+          testing_center: number
+          text: string
+        }
+        Update: {
+          author?: string
+          created_at?: string
+          id?: number
+          rating?: number
+          testing_center?: number
+          text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_author_fkey"
+            columns: ["author"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_testing_center_fkey"
+            columns: ["testing_center"]
+            isOneToOne: false
+            referencedRelation: "testing_centers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       testing_centers: {
         Row: {
           contact: number
@@ -188,7 +230,7 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "testing_centers_owner_fkey"
+            foreignKeyName: "testing_centers_owner_fkey1"
             columns: ["owner"]
             isOneToOne: false
             referencedRelation: "users"

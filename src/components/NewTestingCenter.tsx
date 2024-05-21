@@ -84,6 +84,7 @@ import { api } from "@/trpc/react";
 import { supabase } from "supabase/supabaseClient";
 import SelectTime from "./SelectTime";
 import { useRouter } from "next/navigation";
+import useGetSession from "@/utils/useGetSession";
 
 interface DaysType {
   label: string;
@@ -98,7 +99,7 @@ interface ImagesType {
 }
 
 const NewTestingCenter = () => {
-  const user = supabase.auth.getSession();  
+  const { session: user } = useGetSession()
 
   const uploadTestingCenterMutation = api.user.addTestingCenter.useMutation();
   const [locationData, setLocationData] = useState<LocationInterface>({
@@ -293,7 +294,7 @@ const NewTestingCenter = () => {
                   await uploadTestingCenterMutation.mutateAsync({
                     ...data,
                     open_hours: daysValue,
-                    ownerId: (await user).data.session!.user.id,
+                    ownerId: user?.user.id ?? ""
                   });
 
                 const postId = uploadData.id;

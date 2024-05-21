@@ -8,6 +8,7 @@ import {
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { utapi } from "@/server/uploadthing";
+import { Database } from "@/lib/types";
 
 const centerValues = z.object({
   name: z.string().min(1),
@@ -219,7 +220,7 @@ export const userRouter = createTRPCRouter({
 
       return data;
     }),
-  getSingleCenter: protectedProcedure
+  getSingleCenter: publicProcedure
     .input(
       z.object({
         id: z.string(),
@@ -231,7 +232,7 @@ export const userRouter = createTRPCRouter({
         const { data, error } = await ctx.supabase
           .from("testing_centers")
           .select(
-            "*, location:locations(*), open_hour:open_hours(*), images(*)",
+            "*, owner_data:users(*), location:locations(*), open_hour:open_hours(*), images(*), reviews(*)",
           )
           .eq("id", input.id)
           .eq("status", input.type)
@@ -249,7 +250,7 @@ export const userRouter = createTRPCRouter({
         const { data, error } = await ctx.supabase
           .from("testing_centers")
           .select(
-            "*, location:locations(*), open_hour:open_hours(*), images(*)",
+            "*, owner_data:users(*), location:locations(*), open_hour:open_hours(*), images(*), reviews(*)",
           )
           .eq("id", input.id)
           .single();
@@ -496,6 +497,31 @@ export const userRouter = createTRPCRouter({
         });
       }
 
+      return true;
+    }),
+  addReview: protectedProcedure
+    .input(
+      z.object({
+        labId: z.number(),
+        author: z.string(),
+        rating: z.number(),
+        text: z.string().min(1),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      const { error } = await ctx.supabase.from("reviews").insert({
+        testing_center: input.labId,
+        rating: input.rating,
+        text: input.text,
+        author: input.author,
+      });
+
+      if (error) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: error.message,
+        });
+      }
       return true;
     }),
 });
