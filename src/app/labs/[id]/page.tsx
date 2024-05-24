@@ -9,28 +9,31 @@ const page = async ({ params }: { params: { id: string } }) => {
     id: labId,
   });
 
+  if (!labData) {
+    redirect("/");
+  }
+
+  const reviews = await api.user.getReviews({
+    labId: parseInt(labId),
+  });
+
   const user = await api.auth.getUserFromSession();
 
-  if (
-    (labData.status === "pending" ||
-      labData.status === "rejected" ||
-      labData.status === "deleted") &&
-    !user
-  ) {
+  const isAuthor = labData.owner === user?.id;
+  const isNotAccepted = labData.status !== "accepted";
+  const isAdmin = user?.user_role === "admin";
+
+  if (isAdmin || isAuthor) {
+    return <LabView labData={labData} labId={labId} reviewsData={reviews} />;
+  }
+
+  if (isNotAccepted) {
+    console.log("🚀 ~ page ~ isNotAccepted:", isNotAccepted);
+    console.log("Redirect");
     redirect("/");
   }
 
-  if (
-    labData.owner !== user?.id &&
-    (labData.status === "pending" ||
-      labData.status === "rejected" ||
-      labData.status === "deleted") &&
-    user?.user_role !== "admin"
-  ) {
-    redirect("/");
-  }
-
-  return <LabView labData={labData} labId={labId} />;
+  return <LabView labData={labData} labId={labId} reviewsData={reviews} />;
 };
 
 export default page;

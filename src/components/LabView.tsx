@@ -1,18 +1,15 @@
 "use client";
-import { cn, isLabOpen, toMilitaryTime } from "@/lib/utils";
+import { cn, isLabOpen, timeAgo, toMilitaryTime } from "@/lib/utils";
 import { api, type RouterOutputs } from "@/trpc/react";
+import { ChevronDown, Clock, DoorClosed } from "lucide-react";
 import Image from "next/image";
-import { ChevronDown } from "lucide-react";
-import { Clock, DoorClosed } from "lucide-react";
 
-import { CircleUserRound } from "lucide-react";
 
-import { Separator } from "./ui/separator";
-import { useState, useEffect } from "react";
-import { Button } from "./ui/button";
-import { Facebook } from "lucide-react";
-import { Star } from "lucide-react";
+import { Facebook, Star } from "lucide-react";
+import { useEffect, useState } from "react";
 import { z } from "zod";
+import { Button } from "./ui/button";
+import { Separator } from "./ui/separator";
 
 import {
   Dialog,
@@ -26,20 +23,20 @@ import {
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
-  FormLabel,
-  FormMessage,
+  FormMessage
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { Progress } from "@/components/ui/progress";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
-import { Textarea } from "./ui/textarea";
 import useGetSession from "@/utils/useGetSession";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { Textarea } from "./ui/textarea";
+import ImageSlider from "./ImageSlider";
 
 const rateStatus = [
   {
@@ -67,9 +64,11 @@ const rateStatus = [
 const LabView = ({
   labData,
   labId,
+  reviewsData,
 }: {
   labData: RouterOutputs["user"]["getSingleCenter"];
   labId: string;
+  reviewsData: RouterOutputs["user"]["getReviews"];
 }) => {
   const [starHover, setStarHover] = useState<number | null>(null);
   const router = useRouter();
@@ -84,10 +83,26 @@ const LabView = ({
     },
   );
 
-  const addReviewMutation = api.user.addReview.useMutation();
+  const { data: reviews } = api.user.getReviews.useQuery(
+    {
+      labId: parseInt(labId),
+    },
+    {
+      initialData: reviewsData,
+    },
+  );
+
+  const addReviewMutation = api.user.addReview.useMutation({
+    onError(error) {
+      if (error.data?.code === "CONFLICT") {
+        toast.error("You can only review once per lab.");
+      }
+    },
+  });
+  const utils = api.useUtils();
 
   const formSchema = z.object({
-    text: z.string().min(2).max(50),
+    text: z.string().min(2).max(100),
   });
 
   type reviewType = z.infer<typeof formSchema>;
@@ -101,8 +116,12 @@ const LabView = ({
 
   const currentDate = new Date();
 
-  // Get the day of the week in full name format (e.g., "Monday", "Tuesday")
   const dayName = currentDate.toLocaleDateString("en-US", { weekday: "long" });
+  const isAuthor = lab.owner === session?.user.id;
+
+  function getSum(total: number, num: number) {
+    return total + num;
+  }
 
   return (
     <div className="w-full">
@@ -120,7 +139,7 @@ const LabView = ({
           <b>Status:</b> {lab.status}
         </div>
       )}
-      <div className="flex h-[26rem] w-full gap-2 overflow-hidden rounded-2xl">
+      <div className="h-[26rem] w-full gap-2 overflow-hidden rounded-2xl md:flex hidden">
         {lab.images.map((image) => {
           if (image.thumbnail) {
             return (
@@ -178,8 +197,14 @@ const LabView = ({
         </div>
       </div>
 
-      <div className="mt-6 flex">
-        <div className="w-1/2 ">
+      <div className="h-[26rem] w-full md:hidden block rounded-2xl overflow-hidden">
+        <ImageSlider imageData={lab.images} />
+      </div>
+
+      <div className="w-full gap-2 overflow-hidden rounded-2xl"></div>
+
+      <div className="mt-6 flex lg:flex-row flex-col gap-y-5">
+        <div className="lg:w-1/2 ">
           <h1 className="text-xl font-medium">
             {lab.name} in {lab.location?.city}, {lab.location?.province}
           </h1>
@@ -276,13 +301,24 @@ const LabView = ({
             <Separator />
 
             <div className="flex items-center gap-2">
-              <div className="h-fit w-fit rounded-full bg-blue">
-                <CircleUserRound
-                  size={40}
-                  strokeWidth={1}
-                  color="#ffffff"
-                  stroke="white"
-                />
+              <div className="relative h-11 w-11 overflow-hidden rounded-full">
+                {lab.owner_data?.image ? (
+                  <Image
+                    src={lab.owner_data?.image}
+                    alt="user image"
+                    width={300}
+                    height={300}
+                    className="absolute bottom-0 left-0 top-0 my-auto object-cover object-center"
+                  />
+                ) : (
+                  <Image
+                    src={"/no-profile.webp"}
+                    alt="user image"
+                    width={300}
+                    height={300}
+                    className="absolute left-0 top-0 object-cover object-center"
+                  />
+                )}
               </div>
               <div className="">
                 <h1 className="">{lab.owner_data?.full_name}</h1>
@@ -297,26 +333,17 @@ const LabView = ({
                 {lab.services}
               </pre>
             </div>
-
-            <Separator />
-
-            <div className="">
-              <h1 className="">Reviews</h1>
-              {lab.reviews.length === 0 && (
-                <p className="text-sm opacity-70">No reviews yet</p>
-              )}
-            </div>
           </div>
         </div>
 
-        <div className="w-1/2 px-10">
+        <div className="lg:w-1/2 lg:px-10">
           <div className="w-full rounded-2xl border p-5 text-center">
             <h1 className="text-lg">Get in touch</h1>
             <p className="mx-auto max-w-xs text-sm opacity-70">
               Feel free to reach out to us anytime via our facebook page.
             </p>
 
-            <Button className="mt-4">
+            <Button className="mt-4 bg-blue hover:bg-blue/90">
               <a
                 href={lab.facebook}
                 rel="noopener noreferrer"
@@ -348,6 +375,12 @@ const LabView = ({
                       onClick={() => {
                         if (!session) {
                           router.push("/auth/signin");
+                        } else if (isAuthor) {
+                          toast.error("You can't rate your own lab");
+                        } else if (lab.status !== "accepted") {
+                          toast.error(
+                            "You can't rate a lab that is not accepted",
+                          );
                         } else {
                           setRate(index + 1);
                         }
@@ -391,43 +424,66 @@ const LabView = ({
                 <Form {...form}>
                   <form
                     onSubmit={form.handleSubmit(async (data) => {
-                      await addReviewMutation.mutateAsync({
-                        author: session?.user.id ?? "",
-                        labId: parseInt(labId),
-                        text: data.text,
-                        rating: rate,
-                      });
+                      try {
+                        await addReviewMutation.mutateAsync({
+                          author: session?.user.id ?? "",
+                          labId: parseInt(labId),
+                          text: data.text,
+                          rating: rate,
+                        });
 
-                      form.reset();
-                      setRate(0);
+                        await utils.user.getSingleCenter.invalidate({
+                          id: labId,
+                        });
+                        toast.success("Review added successfully");
+                        form.reset();
+                        setRate(0);
+                      } catch (error) {
+                        console.log(error);
+                      }
                     })}
                     className="space-y-3"
                   >
-                    <FormField
-                      control={form.control}
-                      name="text"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormControl>
-                            <Textarea
-                              {...field}
-                              placeholder="What can you say?"
-                            />
-                          </FormControl>
+                    <div className="">
+                      <FormField
+                        control={form.control}
+                        name="text"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormControl>
+                              <Textarea
+                                {...field}
+                                placeholder="What can you say?"
+                              />
+                            </FormControl>
 
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <Progress
+                        className="mt-2 h-1"
+                        value={form.watch("text").length}
+                        max={100}
+                        indicatorStyle={cn("", {
+                          "bg-red-500": form.watch("text").length > 100,
+                          "bg-blue": form.watch("text").length <= 100,
+                        })}
+                      />
+                    </div>
+
                     <DialogDescription>
                       Your name will be displayed next to your review.
                     </DialogDescription>
                     <Button
                       type="submit"
-                      className="w-full"
-                      disabled={!form.formState.isValid}
+                      className="w-full bg-blue hover:bg-blue/70"
+                      disabled={
+                        !form.formState.isValid || addReviewMutation.isPending
+                      }
                     >
-                      Submit
+                      {addReviewMutation.isPending ? "Submitting..." : "Submit"}
                     </Button>
                   </form>
                 </Form>
@@ -435,6 +491,103 @@ const LabView = ({
             </Dialog>
 
             <p className="mt-1 text-sm opacity-70">Leave a rating</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-6">
+        <Separator />
+
+        <div className="mt-6 space-y-4 pb-10">
+          <div className="flex w-full items-center justify-between gap-2 bg-yellow/5 p-4 py-4">
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-medium">
+                {reviews.total_rating.average}
+              </h1>
+              <div className="flex">
+                {Array.from({ length: 5 }).map((_, index) => {
+                  return (
+                    <Star
+                      key={index}
+                      size={24}
+                      strokeWidth={1}
+                      color="#fcd34d"
+                      fill={
+                        index < Math.floor(reviews.total_rating.average)
+                          ? "#fcd34d"
+                          : "none"
+                      }
+                    />
+                  );
+                })}
+              </div>
+              <h3 className="text-sm opacity-50">
+                {reviews.total_rating.count} reviews
+              </h3>
+            </div>
+
+            <Button variant={"outline"} className="">See all reviews</Button>
+          </div>
+
+          <h1 className="">Reviews</h1>
+          <div className="">
+            {reviews.data.length === 0 ? (
+              <p className="text-sm opacity-70">No reviews yet</p>
+            ) : (
+              <div className="grid grid-cols-2 gap-4">
+                {reviews.data.map((review) => (
+                  <div className="" key={review.id}>
+                    <div className="flex items-start gap-2">
+                      <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-full">
+                        {review.author_data?.image ? (
+                          <Image
+                            src={review.author_data?.image}
+                            alt="User image"
+                            width={300}
+                            height={300}
+                            className="absolute bottom-0 left-0 top-0 my-auto object-cover object-center"
+                          />
+                        ) : (
+                          <Image
+                            src={"/no-profile.webp"}
+                            alt="User image"
+                            width={300}
+                            height={300}
+                            className="absolute bottom-0 left-0 top-0 my-auto object-cover object-center"
+                          />
+                        )}
+                      </div>
+
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-0">
+                          {Array.from({ length: 5 }).map((_, index) => (
+                            <Star
+                              key={index}
+                              size={16}
+                              strokeWidth={1}
+                              color="#fcd34d"
+                              fill={index < review.rating ? "#fcd34d" : "none"}
+                            />
+                          ))}
+                        </div>
+                        <h1 className="text-sm">
+                          {review.author_data?.full_name}
+                        </h1>
+                        <p className="text-xs opacity-70">
+                          {timeAgo(review.created_at)}
+                        </p>
+
+                        <div className="">
+                          <pre className="text-wrap font-sans text-sm">
+                            {review.text}
+                          </pre>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>

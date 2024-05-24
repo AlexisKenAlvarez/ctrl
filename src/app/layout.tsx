@@ -6,6 +6,7 @@ import SelectRole from "@/components/SelectRole";
 import { TRPCReactProvider } from "@/trpc/react";
 import { api } from "@/trpc/server";
 import Nav from "@/components/Nav";
+import Footer from "@/components/Footer";
 
 const poppins = Poppins({
   weight: ["400", "500", "600", "700", "800"],
@@ -40,11 +41,15 @@ export default async function RootLayout({
                   | "admin"
               }
             />
-            {session.user && !session.user.user_metadata.role ? (
-              <SelectRole userId={session.user.id} />
-            ) : (
-              <div className="flex flex-1 flex-col">{children}</div>
-            )}
+            <div className="flex-1 flex flex-col">
+              {session.user && !session.user.user_metadata.role ? (
+                <SelectRole userId={session.user.id} />
+              ) : (
+                <div className="flex flex-1 flex-col">{children}</div>
+              )}
+            </div>
+
+            <Footer />
           </div>
         </TRPCReactProvider>
       </body>

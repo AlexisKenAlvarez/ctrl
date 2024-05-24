@@ -111,6 +111,8 @@ const TestingCenter = ({
                 <p
                   className={cn("text-sm capitalize", {
                     "text-orange-500": item.status === "pending",
+                    "text-red-500": item.status === "rejected",
+                    "text-green-500": item.status === "accepted"
                   })}
                 >
                   {item.status}

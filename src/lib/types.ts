@@ -244,6 +244,7 @@ export type Database = {
           email: string
           full_name: string
           id: string
+          image: string | null
           user_role: Database["public"]["Enums"]["user_role_enum"] | null
         }
         Insert: {
@@ -251,6 +252,7 @@ export type Database = {
           email: string
           full_name: string
           id?: string
+          image?: string | null
           user_role?: Database["public"]["Enums"]["user_role_enum"] | null
         }
         Update: {
@@ -258,6 +260,7 @@ export type Database = {
           email?: string
           full_name?: string
           id?: string
+          image?: string | null
           user_role?: Database["public"]["Enums"]["user_role_enum"] | null
         }
         Relationships: []
@@ -267,7 +270,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      getaverage: {
+        Args: {
+          labid: number
+        }
+        Returns: {
+          avg_rating: number
+          rating_count: number
+        }[]
+      }
     }
     Enums: {
       day_enum:

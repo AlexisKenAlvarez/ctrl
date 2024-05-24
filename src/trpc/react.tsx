@@ -9,6 +9,7 @@ import SuperJSON from "superjson";
 import { AppProgressBar as ProgressBar } from "next-nprogress-bar";
 
 import { type AppRouter } from "@/server/api/root";
+import { Toaster } from "@/components/ui/sonner";
 
 const createQueryClient = () => new QueryClient();
 
@@ -70,8 +71,12 @@ export function TRPCReactProvider(props: { children: React.ReactNode }) {
         options={{ showSpinner: false }}
         shallowRouting
       />
+
       <api.Provider client={trpcClient} queryClient={queryClient}>
-        {props.children}
+        <>
+          <Toaster />
+          {props.children}
+        </>
       </api.Provider>
     </QueryClientProvider>
   );

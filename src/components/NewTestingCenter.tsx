@@ -239,8 +239,8 @@ const NewTestingCenter = () => {
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
-      region: "",
-      province: undefined,
+      region: "Region IV-A (CALABARZON)",
+      province: "Cavite",
       city: "",
       barangay: "",
       zip: "",
@@ -254,8 +254,8 @@ const NewTestingCenter = () => {
 
   useEffect(() => {
     void (async () => {
-      const regionData = await regions();
-      setLocationData((prev) => ({ ...prev, regions: regionData }));
+      const citiesData = await cities("0421");
+      setLocationData((prev) => ({ ...prev, cities: citiesData }));
     })();
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -597,10 +597,12 @@ const NewTestingCenter = () => {
                             <FormLabel>Region</FormLabel>
                             <FormControl>
                               <Select
-                                value=""
-                                defaultValue=""
+                                value={field.value}
+                                disabled
+                                defaultValue={field.value}
                                 key={field.name}
                                 onValueChange={async (value) => {
+                                  console.log("🚀 ~ onValueChange={ ~ value:", value)
                                   form.resetField("province");
                                   form.resetField("city");
                                   form.resetField("barangay");
@@ -659,8 +661,9 @@ const NewTestingCenter = () => {
                             <FormLabel>Province</FormLabel>
                             <FormControl>
                               <Select
-                                value=""
-                                defaultValue=""
+                                value={field.value}
+                                defaultValue={field.value}
+                                disabled
                                 key={field.name}
                                 onValueChange={async (value) => {
                                   form.resetField("city");

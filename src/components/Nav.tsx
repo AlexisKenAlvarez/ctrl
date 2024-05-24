@@ -28,15 +28,17 @@ const Nav = ({
 }) => {
   const router = useRouter();
   const pathname = usePathname().split("/");
-  
+
   const path = pathname[1];
-  
+
   return (
     <nav className="sticky left-0 top-0 z-50 mx-auto w-full bg-white">
       <nav className="mx-auto w-full p-5">
-        <div className={cn("mx-auto flex items-center justify-between", {
-          "max-w-screen-xl px-16 2xl:px-0": path === "labs",
-        })}>
+        <div
+          className={cn("mx-auto flex items-center justify-between", {
+            "max-w-screen-xl px-16 2xl:px-0": path === "labs",
+          })}
+        >
           <Link href="/">
             <Image
               alt="Logo"
@@ -58,6 +60,9 @@ const Nav = ({
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/profile">Profile</Link>
+                </DropdownMenuItem>
                 {role === "testing_center" && (
                   <DropdownMenuItem asChild>
                     <Link href="/testing-lab">Dashboard</Link>
@@ -67,7 +72,7 @@ const Nav = ({
                 <DropdownMenuItem
                   onClick={async () => {
                     await supabase.auth.signOut();
-                    router.refresh();
+                    router.push("/auth/signin")
                   }}
                 >
                   Logout

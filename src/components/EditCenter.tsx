@@ -405,9 +405,7 @@ const EditCenter = ({
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>
-                <BreadcrumbLink href="/testing-lab">
-                  Dashboard
-                </BreadcrumbLink>
+                <BreadcrumbLink href="/testing-lab">Dashboard</BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator />
               <BreadcrumbItem>
@@ -803,8 +801,9 @@ const EditCenter = ({
                             <FormLabel>Region</FormLabel>
                             <FormControl>
                               <Select
-                                value=""
-                                defaultValue=""
+                                value={field.value}
+                                defaultValue={field.value}
+                                disabled
                                 key={field.name}
                                 onValueChange={async (value) => {
                                   form.setValue("province", "");
@@ -865,8 +864,9 @@ const EditCenter = ({
                             <FormLabel>Province</FormLabel>
                             <FormControl>
                               <Select
-                                value=""
-                                defaultValue=""
+                                value={field.value}
+                                defaultValue={field.value}
+                                disabled
                                 key={field.name}
                                 onValueChange={async (value) => {
                                   form.setValue("city", "");
