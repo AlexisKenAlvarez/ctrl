@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/non-nullable-type-assertion-style */
 /* eslint-disable @typescript-eslint/no-misused-promises */
 import { getFileKey } from "@/lib/utils";
 import {
@@ -220,6 +221,52 @@ export const userRouter = createTRPCRouter({
 
       return data;
     }),
+  getHeroCenters: protectedProcedure
+    .input(
+      z.object({
+        status: z.enum(["all", "pending", "accepted", "rejected"]),
+        search: z.string().nullable(),
+      }),
+    )
+    .query(async ({ input, ctx }) => {
+      if (input.search) {
+        const { data, error } = await ctx.supabase
+          .rpc("search_location", {
+            keyword: input.search,
+          })
+          .select(
+            "*, location:locations(*), open_hour:open_hours(*), images(*)",
+          )
+          .order("created_at", { ascending: false })
+
+        if (error) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: error.message,
+          });
+        }
+
+        return data
+
+      } else {
+        const { data, error } = await ctx.supabase
+          .from("testing_centers")
+          .select(
+            "*, location:locations(*), open_hour:open_hours(*), images(*)",
+          )
+          .eq("status", input.status)
+          .order("created_at", { ascending: false });
+
+        if (error) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: error.message,
+          });
+        }
+
+        return data
+      }
+    }),
   getSingleCenter: publicProcedure
     .input(
       z.object({
@@ -275,7 +322,6 @@ export const userRouter = createTRPCRouter({
         .limit(1)
         .single();
 
-
       const { data, error } = await ctx.supabase
         .from("reviews")
         .select("*, author_data:users(*)")
@@ -295,9 +341,26 @@ export const userRouter = createTRPCRouter({
         total_rating: {
           average: rating?.avg_rating as number,
           count: rating?.rating_count as number,
-        }
-        
+        },
       };
+    }),
+  getAllReviews: publicProcedure
+    .input(z.object({ labId: z.number() }))
+    .query(async ({ input, ctx }) => {
+      const { data, error } = await ctx.supabase
+        .from("reviews")
+        .select("*, author_data:users(*)")
+        .eq("testing_center", input.labId)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: error.message,
+        });
+      }
+
+      return data;
     }),
   updateCenter: protectedProcedure
     .input(

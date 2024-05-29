@@ -1,8 +1,9 @@
+import Hero from "@/components/Hero";
 
 const page = () => {
   return (
     <div>
-      hey
+      <Hero />
     </div>
   );
 };

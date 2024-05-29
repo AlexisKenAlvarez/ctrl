@@ -14,33 +14,6 @@ import { useForm } from "react-hook-form";
 import { generateClientDropzoneAccept } from "uploadthing/client";
 import { z } from "zod";
 
-interface LocationInterface {
-  regions: {
-    id: number;
-    region_code: string;
-    psgc_code: string;
-    region_name: string;
-  }[];
-  barangays: {
-    brgy_code: string;
-    brgy_name: string;
-    province_code: string;
-    region_code: string;
-  }[];
-  provinces: {
-    province_code: string;
-    province_name: string;
-    region_code: string;
-    psgc_code: string;
-  }[];
-  cities: {
-    city_code: string;
-    city_name: string;
-    province_code: string;
-    desc: string;
-  }[];
-}
-
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -67,7 +40,6 @@ import {
   cities,
   provinces,
   regionByCode,
-  regions,
 } from "select-philippines-address";
 import { Separator } from "./ui/separator";
 
@@ -81,10 +53,11 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Checkbox } from "@/components/ui/checkbox";
 import { api } from "@/trpc/react";
-import { supabase } from "supabase/supabaseClient";
 import SelectTime from "./SelectTime";
 import { useRouter } from "next/navigation";
 import useGetSession from "@/utils/useGetSession";
+import { isValidMapLink } from "@/utils/utils";
+import type { LocationInterface } from "@/lib/locationTypes";
 
 interface DaysType {
   label: string;
@@ -99,7 +72,7 @@ interface ImagesType {
 }
 
 const NewTestingCenter = () => {
-  const { session: user } = useGetSession()
+  const { session: user } = useGetSession();
 
   const uploadTestingCenterMutation = api.user.addTestingCenter.useMutation();
   const [locationData, setLocationData] = useState<LocationInterface>({
@@ -113,7 +86,7 @@ const NewTestingCenter = () => {
   const [files, setFiles] = useState<File[]>([]);
   const [images, setImages] = useState<ImagesType[]>([]);
   const [debounce, setDebounce] = useState(false);
-  const router = useRouter()
+  const router = useRouter();
 
   const [daysValue, setDaysValue] = useState<DaysType[]>([
     {
@@ -268,9 +241,7 @@ const NewTestingCenter = () => {
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>
-                <BreadcrumbLink href="/testing-lab">
-                  Dashboard
-                </BreadcrumbLink>
+                <BreadcrumbLink href="/testing-lab">Dashboard</BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator />
               <BreadcrumbItem>
@@ -288,28 +259,43 @@ const NewTestingCenter = () => {
             )}
             disabled={!form.formState.isValid || files.length !== 5}
             onClick={form.handleSubmit(async (data) => {
-              setDebounce(true);
-              try {
-                const uploadData =
-                  await uploadTestingCenterMutation.mutateAsync({
-                    ...data,
-                    open_hours: daysValue,
-                    ownerId: user?.user.id ?? ""
+              if (!debounce) {
+                setDebounce(true);
+
+                if (
+                  data.google_map !== "" &&
+                  !isValidMapLink(data.google_map ?? '')
+                ) {
+                  form.setError("google_map", {
+                    message: "Invalid Google Map link",
                   });
+                  setDebounce(false)
+                  return;
+                }
 
-                const postId = uploadData.id;
-                await startUpload(files, {
-                  preview: previewImage!,
-                  testing_center_id: postId,
-                });
-                form.reset();
-                setImages([]);
-                setFiles([]);
+                try {
+                  const uploadData =
+                    await uploadTestingCenterMutation.mutateAsync({
+                      ...data,
+                      open_hours: daysValue,
+                      ownerId: user?.user.id ?? "",
+                    });
 
-                router.refresh()
-              } catch (error) {
-                console.log(error);
+                  const postId = uploadData.id;
+                  await startUpload(files, {
+                    preview: previewImage!,
+                    testing_center_id: postId,
+                  });
+                  form.reset();
+                  setImages([]);
+                  setFiles([]);
+
+                  router.refresh();
+                } catch (error) {
+                  console.log(error);
+                }
               }
+
               setDebounce(false);
             })}
           >
@@ -602,7 +588,10 @@ const NewTestingCenter = () => {
                                 defaultValue={field.value}
                                 key={field.name}
                                 onValueChange={async (value) => {
-                                  console.log("🚀 ~ onValueChange={ ~ value:", value)
+                                  console.log(
+                                    "🚀 ~ onValueChange={ ~ value:",
+                                    value,
+                                  );
                                   form.resetField("province");
                                   form.resetField("city");
                                   form.resetField("barangay");
@@ -909,7 +898,7 @@ const NewTestingCenter = () => {
                           />
                         </FormControl>
                         <FormDescription>
-                          This will help users find your location.
+                         Share &gt; Embed a map &gt; COPY HTML
                         </FormDescription>
                         <FormMessage />
                       </FormItem>

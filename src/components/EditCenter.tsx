@@ -84,6 +84,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { RouterOutputs, api } from "@/trpc/react";
 import { supabase } from "supabase/supabaseClient";
 import SelectTime from "./SelectTime";
+import { isValidMapLink } from "@/utils/utils";
 
 interface DaysType {
   label: string;
@@ -423,63 +424,76 @@ const EditCenter = ({
             )}
             disabled={!form.formState.isValid}
             onClick={form.handleSubmit(async (values) => {
-              console.log("Old hour", ogDaysValue);
-              console.log("New hour", daysValue);
-              setDebounce(true);
-              try {
-                await editCenterMutation.mutateAsync({
-                  labId: labId,
-                  oldValues: {
-                    name: center.name,
-                    province: center.location!.province,
-                    city: center.location!.city,
-                    region: center.location!.region,
-                    barangay: center.location!.barangay,
-                    zip: center.location!.zip.toString(),
-                    landmark: center.location!.landmark,
-                    services: center.services,
-                    facebook: center.facebook,
-                    contact: center.contact.toString(),
-                    google_map: center.google_map,
-                  },
-                  old_thumbnail: center.images.find((img) => img.thumbnail)!
-                    .name,
-                  old_open_hours: ogDaysValue,
-                  newValues: {
-                    ...values,
-                  },
-                  new_open_hours: daysValue,
-                  new_thumbnail: thumbnail,
-                  thumbnailChanged: thumbnail !== "",
-                  imageChanged: previewImage !== null,
-                  images: center.images,
-                });
+              if (!debounce) {
+                setDebounce(true);
 
-                if (previewImage !== null) {
-                  await startUpload(files, {
-                    preview: previewImage,
-                    testing_center_id: parseInt(labId),
+                if (
+                  values.google_map !== "" &&
+                  !isValidMapLink(values.google_map ?? "")
+                ) {
+                  form.setError("google_map", {
+                    message: "Invalid Google Map link",
                   });
+                  setDebounce(false);
+                  return;
                 }
 
-                form.setValue("name", values.name);
-                form.setValue("region", values.region);
-                form.setValue("province", values.province);
-                form.setValue("city", values.city);
-                form.setValue("barangay", values.barangay);
-                form.setValue("zip", values.zip);
-                form.setValue("landmark", values.landmark);
-                form.setValue("services", values.services);
-                form.setValue("facebook", values.facebook);
-                form.setValue("contact", values.contact);
-                form.setValue("google_map", values.google_map);
+                try {
+                  await editCenterMutation.mutateAsync({
+                    labId: labId,
+                    oldValues: {
+                      name: center.name,
+                      province: center.location!.province,
+                      city: center.location!.city,
+                      region: center.location!.region,
+                      barangay: center.location!.barangay,
+                      zip: center.location!.zip.toString(),
+                      landmark: center.location!.landmark,
+                      services: center.services,
+                      facebook: center.facebook,
+                      contact: center.contact.toString(),
+                      google_map: center.google_map,
+                    },
+                    old_thumbnail: center.images.find((img) => img.thumbnail)!
+                      .name,
+                    old_open_hours: ogDaysValue,
+                    newValues: {
+                      ...values,
+                    },
+                    new_open_hours: daysValue,
+                    new_thumbnail: thumbnail,
+                    thumbnailChanged: thumbnail !== "",
+                    imageChanged: previewImage !== null,
+                    images: center.images,
+                  });
 
-                window.location.href = "/testing-lab";
-                console.log("Edit success");
-                await utils.user.getCenters.invalidate();
-              } catch (error) {
-                console.log(error);
+                  if (previewImage !== null) {
+                    await startUpload(files, {
+                      preview: previewImage,
+                      testing_center_id: parseInt(labId),
+                    });
+                  }
+
+                  form.setValue("name", values.name);
+                  form.setValue("region", values.region);
+                  form.setValue("province", values.province);
+                  form.setValue("city", values.city);
+                  form.setValue("barangay", values.barangay);
+                  form.setValue("zip", values.zip);
+                  form.setValue("landmark", values.landmark);
+                  form.setValue("services", values.services);
+                  form.setValue("facebook", values.facebook);
+                  form.setValue("contact", values.contact);
+                  form.setValue("google_map", values.google_map);
+
+                  window.location.href = "/testing-lab";
+                  console.log("Edit success");
+                  await utils.user.getCenters.invalidate();
+                } catch (error) {
+                  console.log(error);
+                }
               }
+
               setDebounce(false);
             })}
           >

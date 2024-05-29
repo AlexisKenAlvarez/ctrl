@@ -14,7 +14,7 @@ const Footer = () => {
       <footer className="mx-auto w-full">
         <div
           className={cn("mx-auto text-sm ", {
-            "max-w-screen-xl px-16 2xl:px-0": path === "labs",
+            "max-w-screen-xl md:px-16 2xl:px-0": path === "labs",
           })}
         >
           <Separator className="h-1" />

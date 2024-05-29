@@ -1,9 +1,8 @@
 "use client";
 import { cn, isLabOpen, timeAgo, toMilitaryTime } from "@/lib/utils";
 import { api, type RouterOutputs } from "@/trpc/react";
-import { ChevronDown, Clock, DoorClosed } from "lucide-react";
+import { ChevronDown, Clock, DoorClosed, Mail, Phone } from "lucide-react";
 import Image from "next/image";
-
 
 import { Facebook, Star } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -25,7 +24,7 @@ import {
   FormControl,
   FormField,
   FormItem,
-  FormMessage
+  FormMessage,
 } from "@/components/ui/form";
 import { Progress } from "@/components/ui/progress";
 
@@ -37,6 +36,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Textarea } from "./ui/textarea";
 import ImageSlider from "./ImageSlider";
+import { extractSrcUrl } from "@/utils/utils";
 
 const rateStatus = [
   {
@@ -139,7 +139,7 @@ const LabView = ({
           <b>Status:</b> {lab.status}
         </div>
       )}
-      <div className="h-[26rem] w-full gap-2 overflow-hidden rounded-2xl md:flex hidden">
+      <div className="hidden h-[26rem] w-full gap-2 overflow-hidden rounded-2xl md:flex">
         {lab.images.map((image) => {
           if (image.thumbnail) {
             return (
@@ -197,13 +197,13 @@ const LabView = ({
         </div>
       </div>
 
-      <div className="h-[26rem] w-full md:hidden block rounded-2xl overflow-hidden">
+      <div className="block w-full overflow-hidden rounded-2xl md:hidden">
         <ImageSlider imageData={lab.images} />
       </div>
 
       <div className="w-full gap-2 overflow-hidden rounded-2xl"></div>
 
-      <div className="mt-6 flex lg:flex-row flex-col gap-y-5">
+      <div className="mt-6 flex flex-col gap-y-5 lg:flex-row">
         <div className="lg:w-1/2 ">
           <h1 className="text-xl font-medium">
             {lab.name} in {lab.location?.city}, {lab.location?.province}
@@ -340,19 +340,42 @@ const LabView = ({
           <div className="w-full rounded-2xl border p-5 text-center">
             <h1 className="text-lg">Get in touch</h1>
             <p className="mx-auto max-w-xs text-sm opacity-70">
-              Feel free to reach out to us anytime via our facebook page.
+              Feel free to reach out to us anytime.
             </p>
 
-            <Button className="mt-4 bg-blue hover:bg-blue/90">
-              <a
-                href={lab.facebook}
-                rel="noopener noreferrer"
-                target="_blank"
-                className="flex items-center gap-x-2"
-              >
-                <Facebook size={16} /> <span>Facebook page</span>
-              </a>
-            </Button>
+            <div className="mx-auto mt-4 flex max-w-72 flex-col gap-2">
+              <Button className=" bg-blue hover:bg-blue/90">
+                <a
+                  href={lab.facebook}
+                  rel="noopener noreferrer"
+                  target="_blank"
+                  className="flex items-center gap-x-2"
+                >
+                  <Facebook size={16} /> <span>Facebook page</span>
+                </a>
+              </Button>
+
+              <div className="flex gap-2">
+                <Button className=" w-1/2 bg-blue hover:bg-blue/90">
+                  <a
+                    href={`mailto:${lab.owner_data?.email}`}
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-x-2"
+                  >
+                    <Phone size={16} /> <span>{lab.contact}</span>
+                  </a>
+                </Button>
+                <Button className=" w-1/2 bg-blue hover:bg-blue/90">
+                  <a
+                    href={`mailto:${lab.owner_data?.email}`}
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-x-2"
+                  >
+                    <Mail size={16} /> <span>Email</span>
+                  </a>
+                </Button>
+              </div>
+            </div>
 
             <Dialog open={rate !== 0}>
               <DialogTrigger asChild>
@@ -497,44 +520,49 @@ const LabView = ({
 
       <div className="mt-6">
         <Separator />
-
-        <div className="mt-6 space-y-4 pb-10">
-          <div className="flex w-full items-center justify-between gap-2 bg-yellow/5 p-4 py-4">
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-medium">
-                {reviews.total_rating.average}
-              </h1>
-              <div className="flex">
-                {Array.from({ length: 5 }).map((_, index) => {
-                  return (
-                    <Star
-                      key={index}
-                      size={24}
-                      strokeWidth={1}
-                      color="#fcd34d"
-                      fill={
-                        index < Math.floor(reviews.total_rating.average)
-                          ? "#fcd34d"
-                          : "none"
-                      }
-                    />
-                  );
-                })}
+        {reviews.data.length === 0 ? (
+          <>
+            <h1 className="mt-5 text-lg">Reviews</h1>
+            <p className="text-sm opacity-70">No reviews yet</p>
+          </>
+        ) : (
+          <div className="mt-6 space-y-4 pb-10">
+            <div className="flex w-full flex-col justify-between gap-2 bg-yellow/5 p-4 py-4 sm:flex-row sm:items-center">
+              <div className="flex items-center gap-2">
+                <h1 className="text-2xl font-medium">
+                  {reviews.total_rating.average.toFixed(1)}
+                </h1>
+                <div className="flex">
+                  {Array.from({ length: 5 }).map((_, index) => {
+                    return (
+                      <Star
+                        key={index}
+                        size={24}
+                        strokeWidth={1}
+                        color="#fcd34d"
+                        fill={
+                          index < Math.floor(reviews.total_rating.average)
+                            ? "#fcd34d"
+                            : "none"
+                        }
+                      />
+                    );
+                  })}
+                </div>
+                <h3 className="text-sm opacity-50">
+                  {reviews.total_rating.count} reviews
+                </h3>
               </div>
-              <h3 className="text-sm opacity-50">
-                {reviews.total_rating.count} reviews
-              </h3>
+              <AllReviews
+                labId={labId}
+                average={reviews.total_rating.average}
+                total={reviews.total_rating.count}
+              />
             </div>
 
-            <Button variant={"outline"} className="">See all reviews</Button>
-          </div>
-
-          <h1 className="">Reviews</h1>
-          <div className="">
-            {reviews.data.length === 0 ? (
-              <p className="text-sm opacity-70">No reviews yet</p>
-            ) : (
-              <div className="grid grid-cols-2 gap-4">
+            <h1 className="text-lg">Reviews</h1>
+            <div className="">
+              <div className="grid gap-4 gap-y-6 sm:grid-cols-2">
                 {reviews.data.map((review) => (
                   <div className="" key={review.id}>
                     <div className="flex items-start gap-2">
@@ -573,7 +601,10 @@ const LabView = ({
                         <h1 className="text-sm">
                           {review.author_data?.full_name}
                         </h1>
-                        <p className="text-xs opacity-70">
+                        <p
+                          className="text-xs opacity-70"
+                          suppressHydrationWarning
+                        >
                           {timeAgo(review.created_at)}
                         </p>
 
@@ -587,11 +618,138 @@ const LabView = ({
                   </div>
                 ))}
               </div>
-            )}
+            </div>
           </div>
-        </div>
+        )}
+      </div>
+
+      <div className="mb-14 mt-6 h-96 w-full space-y-3">
+        <Separator />
+        <h1 className="text-lg">Where you&apos;ll be</h1>
+        <iframe
+          onError={(e) => {
+            console.log("Error", e);
+          }}
+          src={extractSrcUrl(lab.google_map ?? "") ?? ""}
+          className="h-full w-full"
+          allowFullScreen
+          loading="lazy"
+          referrerPolicy="no-referrer-when-downgrade"
+        ></iframe>
       </div>
     </div>
+  );
+};
+
+const AllReviews = ({
+  labId,
+  average,
+  total,
+}: {
+  labId: string;
+  average: number;
+  total: number;
+}) => {
+  const { data: reviews } = api.user.getAllReviews.useQuery({
+    labId: parseInt(labId),
+  });
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant={"outline"} className="w-fit">
+          See all reviews
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-h-[80svh] overflow-y-scroll !p-0">
+        <DialogHeader>
+          <div className="sticky left-0 top-0 z-10 bg-white p-5">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <DialogTitle>Overall rating</DialogTitle>
+                {rateStatus.map((status) => {
+                  if (status.rate === Math.floor(average)) {
+                    return (
+                      <p className="opacity-50" key={status.rate}>
+                        - {status.label}
+                      </p>
+                    );
+                  }
+                })}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <div className="flex">
+                  {Array.from({ length: 5 }).map((_, index) => (
+                    <Star
+                      key={index}
+                      size={32}
+                      strokeWidth={1}
+                      color="#fcd34d"
+                      fill={index + 1 <= average ? "#fcd34d" : "none"}
+                    />
+                  ))}
+                </div>
+                <h3 className="text-sm opacity-50">{total} reviews</h3>
+              </div>
+            </div>
+            <Separator className="!mt-4" />
+          </div>
+
+          <div className="grid gap-4 gap-y-6 p-5">
+            {reviews?.map((review) => (
+              <div className="" key={review.id}>
+                <div className="flex items-start gap-2">
+                  <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-full">
+                    {review.author_data?.image ? (
+                      <Image
+                        src={review.author_data?.image}
+                        alt="User image"
+                        width={300}
+                        height={300}
+                        className="absolute bottom-0 left-0 top-0 my-auto object-cover object-center"
+                      />
+                    ) : (
+                      <Image
+                        src={"/no-profile.webp"}
+                        alt="User image"
+                        width={300}
+                        height={300}
+                        className="absolute bottom-0 left-0 top-0 my-auto object-cover object-center"
+                      />
+                    )}
+                  </div>
+
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-0">
+                      {Array.from({ length: 5 }).map((_, index) => (
+                        <Star
+                          key={index}
+                          size={16}
+                          strokeWidth={1}
+                          color="#fcd34d"
+                          fill={index < review.rating ? "#fcd34d" : "none"}
+                        />
+                      ))}
+                    </div>
+                    <h1 className="text-sm text-left">{review.author_data?.full_name}</h1>
+                    <p className="text-xs opacity-70 text-left">
+                      {timeAgo(review.created_at)}
+                    </p>
+
+                    <div className="">
+                      <pre className="text-wrap font-sans text-sm text-left">
+                        {review.text}
+                      </pre>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </DialogHeader>
+      </DialogContent>
+    </Dialog>
   );
 };
 

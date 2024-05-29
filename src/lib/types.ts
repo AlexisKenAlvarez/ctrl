@@ -279,6 +279,25 @@ export type Database = {
           rating_count: number
         }[]
       }
+      search_location: {
+        Args: {
+          keyword: string
+        }
+        Returns: {
+          contact: number
+          created_at: string
+          deactivated: boolean
+          facebook: string
+          google_map: string | null
+          id: number
+          name: string
+          owner: string
+          services: string
+          status:
+            | Database["public"]["Enums"]["testing_center_status_enum"]
+            | null
+        }[]
+      }
     }
     Enums: {
       day_enum:

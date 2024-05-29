@@ -84,18 +84,16 @@ const TestingCenter = ({
         <Separator />
       </div>
 
-      <div className="grid  w-fit grid-cols-2 gap-4 bg-white p-5  sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5">
+      <div className="grid  w-fit grid-cols-2 gap-4 bg-white p-5 sm:grid-cols-3  md:grid-cols-4 lg:grid-cols-5 2xl:grid-cols-6">
         {centerData.map((item) => (
           <div className="h-auto" key={item.id}>
-            <AspectRatio ratio={1 / 1}>
-              <div className="group relative h-fit w-full auto-rows-max overflow-hidden rounded-lg">
+              <div className="group relative h-fit w-full auto-rows-max auto-cols-min overflow-hidden rounded-lg">
                 <ImageSlider
                   imageData={item.images}
                   labId={item.id}
                   deactivated={item.deactivated}
                 />
               </div>
-            </AspectRatio>
             <div className="mt-3">
               <h1 className=" text-sm font-medium sm:text-base">{item.name}</h1>
               <p className="text-xs opacity-70 sm:text-sm">
@@ -112,7 +110,7 @@ const TestingCenter = ({
                   className={cn("text-sm capitalize", {
                     "text-orange-500": item.status === "pending",
                     "text-red-500": item.status === "rejected",
-                    "text-green-500": item.status === "accepted"
+                    "text-green-500": item.status === "accepted",
                   })}
                 >
                   {item.status}
@@ -169,7 +167,7 @@ const ImageSlider = ({
 
   return (
     <>
-      <Carousel setApi={setApi} className="h-full ">
+      <Carousel setApi={setApi} className="h-full bg-black">
         <CarouselContent className="">
           {imageLoading && (
             <AspectRatio ratio={1 / 1} className=" ">
@@ -179,8 +177,8 @@ const ImageSlider = ({
           {imageData.map((image) => {
             if (image.thumbnail) {
               return (
-                <CarouselItem className="h-full" key={image.id}>
-                  <AspectRatio ratio={1 / 1} className=" ">
+                <CarouselItem className="!h-full " key={image.id}>
+                  <AspectRatio ratio={1 / 1} className="w-full !h-full">
                     <Image
                       onLoad={() => {
                         setImageLoading(false);
@@ -188,7 +186,7 @@ const ImageSlider = ({
                       src={image.url}
                       width={900}
                       height={900}
-                      className="h-full w-full object-cover object-center"
+                      className="h-full w-full object-cover object-center absolute bottom-0"
                       alt={image.id.toString()}
                     />
                   </AspectRatio>
@@ -200,13 +198,13 @@ const ImageSlider = ({
           {imageData.map((image) => {
             if (!image.thumbnail) {
               return (
-                <CarouselItem className="h-64 w-64" key={image.id}>
+                <CarouselItem className="" key={image.id}>
                   <AspectRatio ratio={1 / 1} className=" ">
                     <Image
                       src={image.url}
-                      width={500}
-                      height={500}
-                      className="h-full w-full object-cover object-center"
+                      width={900}
+                      height={900}
+                      className="h-full w-full object-cover object-center absolute bottom-0"
                       alt={image.id.toString()}
                     />
                   </AspectRatio>
