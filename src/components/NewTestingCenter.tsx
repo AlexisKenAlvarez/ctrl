@@ -236,7 +236,7 @@ const NewTestingCenter = () => {
 
   return (
     <div className="overflow relative mx-auto flex w-full flex-1 flex-col">
-      <div className="sticky top-[5.8rem] z-10 w-full drop-shadow-md">
+      <div className="sticky top-[5.8rem] z-10 w-full">
         <div className="flex h-20 w-full items-center justify-between bg-white px-5 py-4  ">
           <Breadcrumb>
             <BreadcrumbList>

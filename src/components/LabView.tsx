@@ -82,6 +82,7 @@ const LabView = ({
       initialData: labData,
     },
   );
+  console.log("🚀 ~ lab:", lab);
 
   const { data: reviews } = api.user.getReviews.useQuery(
     {
@@ -118,10 +119,6 @@ const LabView = ({
 
   const dayName = currentDate.toLocaleDateString("en-US", { weekday: "long" });
   const isAuthor = lab.owner === session?.user.id;
-
-  function getSum(total: number, num: number) {
-    return total + num;
-  }
 
   return (
     <div className="w-full">
@@ -356,14 +353,8 @@ const LabView = ({
               </Button>
 
               <div className="flex gap-2">
-                <Button className=" w-1/2 bg-blue hover:bg-blue/90">
-                  <a
-                    href={`mailto:${lab.owner_data?.email}`}
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-x-2"
-                  >
-                    <Phone size={16} /> <span>{lab.contact}</span>
-                  </a>
+                <Button className=" flex w-1/2 items-center gap-x-2 bg-blue hover:bg-blue/90">
+                  <Phone size={16} /> <span>{lab.contact}</span>
                 </Button>
                 <Button className=" w-1/2 bg-blue hover:bg-blue/90">
                   <a
@@ -455,9 +446,7 @@ const LabView = ({
                           rating: rate,
                         });
 
-                        await utils.user.getSingleCenter.invalidate({
-                          id: labId,
-                        });
+                        await utils.user.getSingleCenter.invalidate()
                         toast.success("Review added successfully");
                         form.reset();
                         setRate(0);
@@ -623,20 +612,22 @@ const LabView = ({
         )}
       </div>
 
-      <div className="mb-14 mt-6 h-96 w-full space-y-3">
-        <Separator />
-        <h1 className="text-lg">Where you&apos;ll be</h1>
-        <iframe
-          onError={(e) => {
-            console.log("Error", e);
-          }}
-          src={extractSrcUrl(lab.google_map ?? "") ?? ""}
-          className="h-full w-full"
-          allowFullScreen
-          loading="lazy"
-          referrerPolicy="no-referrer-when-downgrade"
-        ></iframe>
-      </div>
+      {lab.google_map && (
+        <div className="mb-14 mt-6 h-96 w-full space-y-3">
+          <Separator />
+          <h1 className="text-lg">Where you&apos;ll be</h1>
+          <iframe
+            onError={(e) => {
+              console.log("Error", e);
+            }}
+            src={extractSrcUrl(lab.google_map ?? "") ?? ""}
+            className="h-full w-full"
+            allowFullScreen
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+          ></iframe>
+        </div>
+      )}
     </div>
   );
 };
@@ -662,7 +653,7 @@ const AllReviews = ({
         </Button>
       </DialogTrigger>
       <DialogContent className="max-h-[80svh] overflow-y-scroll !p-0">
-        <DialogHeader>
+        <DialogHeader className="space-y-0">
           <div className="sticky left-0 top-0 z-10 bg-white p-5">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
@@ -696,7 +687,7 @@ const AllReviews = ({
             <Separator className="!mt-4" />
           </div>
 
-          <div className="grid gap-4 gap-y-6 p-5">
+          <div className="grid gap-4 gap-y-6 p-5 pb-7">
             {reviews?.map((review) => (
               <div className="" key={review.id}>
                 <div className="flex items-start gap-2">
@@ -732,13 +723,15 @@ const AllReviews = ({
                         />
                       ))}
                     </div>
-                    <h1 className="text-sm text-left">{review.author_data?.full_name}</h1>
-                    <p className="text-xs opacity-70 text-left">
+                    <h1 className="text-left text-sm">
+                      {review.author_data?.full_name}
+                    </h1>
+                    <p className="text-left text-xs opacity-70">
                       {timeAgo(review.created_at)}
                     </p>
 
                     <div className="">
-                      <pre className="text-wrap font-sans text-sm text-left">
+                      <pre className="text-wrap text-left font-sans text-sm">
                         {review.text}
                       </pre>
                     </div>

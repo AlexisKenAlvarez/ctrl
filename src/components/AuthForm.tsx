@@ -98,11 +98,12 @@ const Signin = () => {
             const userData = await getUserMutation.mutateAsync({
               id: signinData.user!.id,
             });
+            console.log("🚀 ~ onSubmit={form.handleSubmit ~ userData:", userData)
 
             await supabase.auth.updateUser({
               data: {
                 name: userData.full_name,
-                type: userData.user_role
+                type: userData.user_role,
               },
             });
 

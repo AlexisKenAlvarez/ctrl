@@ -1,39 +1,13 @@
 "use client";
 
-import { Plus } from "lucide-react";
-import Link from "next/link";
-import { Button } from "./ui/button";
-import { Separator } from "./ui/separator";
-import Image from "next/image";
-import { EllipsisVertical } from "lucide-react";
+import "slick-carousel/slick/slick-theme.css";
+import "slick-carousel/slick/slick.css";
 
 import { AspectRatio } from "@/components/ui/aspect-ratio";
-
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbList,
-  BreadcrumbPage,
-} from "@/components/ui/breadcrumb";
-import { api } from "@/trpc/react";
-import type { RouterOutputs } from "@/trpc/react";
 import { type CarouselApi } from "@/components/ui/carousel";
+import { api } from "@/trpc/react";
+import { Frown, MapPin, ArrowBigRightDash } from "lucide-react";
+import Image from "next/image";
 
 import {
   Carousel,
@@ -42,78 +16,188 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { citiesData } from "@/lib/constants";
 import { cn } from "@/lib/utils";
-import { useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useState, useRef } from "react";
+
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+import { SlidersHorizontal } from "lucide-react";
+import { Button } from "./ui/button";
+import { useDraggable } from "react-use-draggable-scroll";
+
+interface filterType {
+  type: "top-rated" | "oldest" | "newest" | null;
+}
 
 const Hero = () => {
-  const params = useSearchParams();
-  const { data: centerData } = api.user.getHeroCenters.useQuery({
-    search: params.get("search") ?? null,
-    status: "accepted",
-  });
-  console.log("🚀 ~ Hero ~ centerData:", params.get("search"))
+  const searchParams = useSearchParams();
+  const ref =
+    useRef<HTMLDivElement>() as React.MutableRefObject<HTMLInputElement>;
+  const { events } = useDraggable(ref);
+  const { data: centerData, isPending: dataPending } =
+    api.user.getHeroCenters.useQuery({
+      search: searchParams.get("search") ?? null,
+      status: "accepted",
+      filter: (searchParams.get("filter") as filterType["type"]) ?? null,
+    });
 
+  const createQueryString = useCallback(
+    (name: string, value: string) => {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set(name, value);
+
+      return params.toString();
+    },
+    [searchParams],
+  );
+  const router = useRouter();
+
+  const filterBy = [
+    {
+      label: "Top rated",
+      link: "top-rated",
+    },
+    {
+      label: "Oldest first",
+      link: "oldest",
+    },
+    {
+      label: "Newest first",
+      link: "newest",
+    },
+  ];
+
+  const handleScroll = (direction: "left" | "right") => {
+    ref.current.scrollBy({
+      left: direction === "left" ? -250 : 250,
+      behavior: "smooth",
+    });
+  };
 
   return (
-    <div className="mx-auto flex w-full flex-1 flex-col ">
-      <div className="sticky top-[5.8rem] z-10 w-full ">
-        <div className="flex  h-20 w-full items-center justify-between bg-white px-5 py-4 drop-shadow-md">
-          <Breadcrumb>
-            <BreadcrumbList>
-              <BreadcrumbItem>
-                <BreadcrumbPage>Dashboard</BreadcrumbPage>
-              </BreadcrumbItem>
-            </BreadcrumbList>
-          </Breadcrumb>
-
-          <Link href={`/testing-lab/new`}>
-            <Button className="space-x-2 rounded-full bg-blue hover:bg-blue/80">
-              <Plus size={18} />
-              <h1 className="">Add new </h1>
-            </Button>
-          </Link>
+    <div className="mx-auto flex w-full flex-1 flex-col px-5 pb-5">
+      <div className="flex w-full items-center gap-6">
+        <Button
+          variant="outline"
+          onClick={() => handleScroll("left")}
+          className="hidden h-8 w-8 shrink-0 rotate-180 rounded-full p-0 md:flex"
+        >
+          <ArrowBigRightDash size={17} />
+        </Button>
+        <div
+          className="scroll-container flex h-fit w-full items-start gap-5 overflow-x-scroll pt-10 md:gap-10"
+          {...events}
+          ref={ref}
+        >
+          {citiesData.map((city) => (
+            <button
+              onClick={() => {
+                if (searchParams.get("search") === city.city_name) {
+                  router.push("/");
+                } else {
+                  router.push(`/?${createQueryString("search", city.city_name)}`);
+                }
+              }}
+              key={city.city_name}
+              className=" flex items-center justify-center text-center text-sm"
+            >
+              <div className="group flex select-none flex-col items-center gap-1 opacity-90">
+                <MapPin strokeWidth={1} />
+                <h1 className="text-xs">{city.label}</h1>
+                <div
+                  className={cn(
+                    " h-1 w-0 rounded-full bg-blue transition-all duration-300 ease-in-out group-hover:w-full",
+                    {
+                      "w-full": searchParams.get("search") === city.city_name,
+                    },
+                  )}
+                ></div>
+              </div>
+            </button>
+          ))}
         </div>
-        <Separator />
+        <Button
+          variant={"outline"}
+          onClick={() => handleScroll("right")}
+          className="hidden h-8 w-8 shrink-0 rounded-full p-0 md:flex"
+        >
+          <ArrowBigRightDash size={17} />
+        </Button>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger className="flex gap-2" asChild>
+            <Button
+              className="h-10 w-10 shrink-0 rounded-full p-0 hover:bg-blue/90 hover:text-white md:h-0 md:w-auto md:px-6 md:py-6"
+              variant={"secondary"}
+            >
+              <SlidersHorizontal size={16} />
+              <h1 className="hidden md:block">Filter</h1>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuLabel>Filter by</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {filterBy.map((item) => (
+              <DropdownMenuItem key={item.label} className="p-3" asChild>
+                <Link href={`/?${createQueryString("filter", item.link)}`}>
+                  {item.label}
+                </Link>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
-      <div className="grid  w-fit grid-cols-2 gap-4 bg-white p-5 sm:grid-cols-3  md:grid-cols-4 lg:grid-cols-5 2xl:grid-cols-6">
-        {centerData?.map((item) => (
-          <div className="h-auto" key={item.id}>
-            <div className="group relative h-fit w-full auto-cols-min auto-rows-max overflow-hidden rounded-lg">
-              <ImageSlider
-                imageData={item.images}
-                labId={item.id}
-                deactivated={item.deactivated}
-              />
+      {dataPending ? (
+        <div className="mt-14 grid w-full grid-cols-2 items-start  gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 2xl:grid-cols-6 ">
+          {Array.from({ length: 20 }).map((_, index) => (
+            <div className="space-y-2" key={index}>
+              <Skeleton className="lg:min-h-40 lg:min-w-40 2xl:min-h-64 2xl:min-w-64" />
+              <Skeleton className="h-10" />
             </div>
-            <div className="mt-3">
-              <h1 className=" text-sm font-medium sm:text-base">{item.name}</h1>
-              <p className="text-xs opacity-70 sm:text-sm">
-                {item.location?.barangay}, {item.location?.city}{" "}
-                {item.location?.province}
-              </p>
-
-              {item.deactivated ? (
-                <p className={cn("text-sm capitalize text-red-500", {})}>
-                  Deactivated
+          ))}
+        </div>
+      ) : centerData && centerData.length > 0 ? (
+        <div className="mt-14 grid w-full grid-cols-2 items-start  gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 2xl:grid-cols-6">
+          {centerData.map((item) => (
+            <div
+              className="h-auto pt-0 cursor-pointer"
+              key={item.id}
+              onClick={() => router.push(`/labs/${item.id}`)}
+            >
+              <div className="group relative h-fit auto-cols-min auto-rows-max overflow-hidden rounded-lg lg:min-w-40 2xl:min-w-64">
+                <ImageSlider imageData={item.images} />
+              </div>
+              <div className="mt-3">
+                <h1 className=" text-left text-sm font-medium sm:text-base">
+                  {item.name}
+                </h1>
+                <p className="text-left text-xs opacity-70 sm:text-sm">
+                  {item.location?.barangay}, {item.location?.city}{" "}
+                  {item.location?.province}
                 </p>
-              ) : (
-                <p
-                  className={cn("text-sm capitalize", {
-                    "text-orange-500": item.status === "pending",
-                    "text-red-500": item.status === "rejected",
-                    "text-green-500": item.status === "accepted",
-                  })}
-                >
-                  {item.status}
-                </p>
-              )}
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      ) : (
+        <div className="grid h-full w-full flex-1 place-content-center text-center opacity-80">
+          <Frown className="mx-auto" strokeWidth={0.7} size={44} />
+          <h2 className="mt-3">No Results</h2>
+          <p className="text-sm">Try searching for another location.</p>
+        </div>
+      )}
     </div>
   );
 };
@@ -127,22 +211,7 @@ interface ImageType {
   testing_center: number;
 }
 
-const ImageSlider = ({
-  imageData,
-  labId,
-  deactivated,
-}: {
-  imageData: ImageType[];
-  labId: number;
-  deactivated: boolean;
-}) => {
-  const [toDelete, setToDelete] = useState<number | null>(null);
-  const [toDeactivate, setToDeactivate] = useState<number | null>(null);
-  const utils = api.useUtils();
-
-  const [menuOpen, setMenuOpen] = useState(false);
-  const deleteCenterMutation = api.user.deleteCenter.useMutation();
-  const changeStatusMutation = api.user.changeCenterStatus.useMutation();
+const ImageSlider = ({ imageData }: { imageData: ImageType[] }) => {
   const [imageLoading, setImageLoading] = useState(true);
   const [cApi, setApi] = useState<CarouselApi>();
   const [current, setCurrent] = useState(0);
@@ -211,28 +280,6 @@ const ImageSlider = ({
           <CarouselPrevious className="absolute left-3 z-10" />
           <CarouselNext className="absolute right-3 z-10" />
         </div>
-        <div className="absolute left-0 top-2 flex w-full justify-end  px-3">
-          <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
-            <DropdownMenuTrigger className="rounded-full bg-white px-1 py-1 opacity-50 transition-all duration-300 ease-in-out hover:opacity-100">
-              {" "}
-              <EllipsisVertical size={20} />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <Link href={`/labs/${labId}`}>
-                <DropdownMenuItem>View</DropdownMenuItem>
-              </Link>
-              <Link href={`/testing-lab/edit/${labId}`}>
-                <DropdownMenuItem>Edit</DropdownMenuItem>
-              </Link>
-              <DropdownMenuItem onClick={() => setToDeactivate(labId)}>
-                {deactivated ? "Reactivate" : "Deactivate"}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setToDelete(labId)}>
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
         <div className="absolute bottom-3 left-0 right-0 mx-auto flex w-fit items-center gap-1">
           {Array.from({ length: imageData.length }).map((_, index) => (
             <div
@@ -247,69 +294,6 @@ const ImageSlider = ({
           ))}
         </div>
       </Carousel>
-
-      <Dialog open={toDeactivate !== null}>
-        <DialogContent onInteractOutside={() => setToDeactivate(null)}>
-          <DialogHeader>
-            <DialogTitle>Are you absolutely sure?</DialogTitle>
-            <DialogDescription>
-              {deactivated
-                ? "This will reactive your testing lab and will be visible again to users."
-                : "This will remove your testing lab into the list of active centers and will not be visible to users until you reactivate it."}
-              <div className="mt-4 flex justify-end gap-2  ">
-                <Button variant="secondary">Cancel</Button>
-
-                <Button
-                  className="hover:bg-blue"
-                  onClick={async () => {
-                    await changeStatusMutation.mutateAsync({
-                      labId,
-                      deactivated: !deactivated,
-                    });
-
-                    setToDeactivate(null);
-                    await utils.user.getCenters.invalidate();
-                  }}
-                >
-                  Confirm
-                </Button>
-              </div>
-            </DialogDescription>
-          </DialogHeader>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={toDelete !== null}>
-        <DialogContent onInteractOutside={() => setToDelete(null)}>
-          <DialogHeader>
-            <DialogTitle>Are you absolutely sure?</DialogTitle>
-            <DialogDescription>
-              This action cannot be undone. This will permanently delete your
-              account and remove your data from our servers.
-              <div className="mt-4 flex justify-end gap-2  ">
-                <Button variant="secondary" onClick={() => setToDelete(null)}>
-                  Cancel
-                </Button>
-
-                <Button
-                  className="hover:bg-blue"
-                  onClick={async () => {
-                    await deleteCenterMutation.mutateAsync({
-                      labId: labId,
-                      images: imageData,
-                    });
-
-                    setToDelete(null);
-                    await utils.user.getCenters.invalidate();
-                  }}
-                >
-                  Confirm
-                </Button>
-              </div>
-            </DialogDescription>
-          </DialogHeader>
-        </DialogContent>
-      </Dialog>
     </>
   );
 };

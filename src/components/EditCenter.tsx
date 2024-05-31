@@ -427,17 +427,6 @@ const EditCenter = ({
               if (!debounce) {
                 setDebounce(true);
 
-                if (
-                  values.google_map !== "" &&
-                  !isValidMapLink(values.google_map ?? "")
-                ) {
-                  form.setError("google_map", {
-                    message: "Invalid Google Map link",
-                  });
-                  setDebounce(false);
-                  return;
-                }
-
                 try {
                   await editCenterMutation.mutateAsync({
                     labId: labId,
@@ -1126,7 +1115,7 @@ const EditCenter = ({
                           />
                         </FormControl>
                         <FormDescription>
-                          This will help users find your location.
+                          Share &gt; Embed a map &gt; COPY HTML
                         </FormDescription>
                         <FormMessage />
                       </FormItem>

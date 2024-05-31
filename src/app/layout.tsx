@@ -25,25 +25,20 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await api.auth.getSession();
-
+  const session = await api.auth.getUserFromSession();
+  
   return (
     <html lang="en">
       <body className={`font-sans ${poppins.variable}`}>
         <TRPCReactProvider>
           <div className="flex min-h-screen flex-col ">
             <Nav
-              isLoggedIn={session.user ? true : false}
-              role={
-                session.user?.user_metadata.role as
-                  | "user"
-                  | "testing_center"
-                  | "admin"
-              }
+              isLoggedIn={session ? true : false}
+              role={session?.user_role ?? null}
             />
-            <div className="flex-1 flex flex-col">
-              {session.user && !session.user.user_metadata.role ? (
-                <SelectRole userId={session.user.id} />
+            <div className="flex flex-1 flex-col">
+              {session?.user_role === null ? (
+                <SelectRole userId={session.id} />
               ) : (
                 <div className="flex flex-1 flex-col">{children}</div>
               )}

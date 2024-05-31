@@ -68,6 +68,13 @@ export type Database = {
             referencedRelation: "testing_centers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "images_testing_center_fkey"
+            columns: ["testing_center"]
+            isOneToOne: false
+            referencedRelation: "testing_centers_with_review_counts"
+            referencedColumns: ["id"]
+          },
         ]
       }
       locations: {
@@ -109,6 +116,13 @@ export type Database = {
             referencedRelation: "testing_centers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "location_testing_center_fkey"
+            columns: ["testing_center"]
+            isOneToOne: true
+            referencedRelation: "testing_centers_with_review_counts"
+            referencedColumns: ["id"]
+          },
         ]
       }
       open_hours: {
@@ -139,6 +153,13 @@ export type Database = {
             columns: ["testing_center"]
             isOneToOne: false
             referencedRelation: "testing_centers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "open_hours_testing_center_fkey"
+            columns: ["testing_center"]
+            isOneToOne: false
+            referencedRelation: "testing_centers_with_review_counts"
             referencedColumns: ["id"]
           },
         ]
@@ -181,6 +202,13 @@ export type Database = {
             columns: ["testing_center"]
             isOneToOne: false
             referencedRelation: "testing_centers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_testing_center_fkey"
+            columns: ["testing_center"]
+            isOneToOne: false
+            referencedRelation: "testing_centers_with_review_counts"
             referencedColumns: ["id"]
           },
         ]
@@ -267,7 +295,32 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      testing_centers_with_review_counts: {
+        Row: {
+          contact: number | null
+          created_at: string | null
+          deactivated: boolean | null
+          facebook: string | null
+          google_map: string | null
+          id: number | null
+          name: string | null
+          owner: string | null
+          review_count: number | null
+          services: string | null
+          status:
+            | Database["public"]["Enums"]["testing_center_status_enum"]
+            | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "testing_centers_owner_fkey1"
+            columns: ["owner"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       getaverage: {

@@ -11,13 +11,13 @@ export const authRouter = createTRPCRouter({
     const user = ctx.user;
 
     if (!user) {
-      return null
+      return
     }
 
     const { data, error } = await ctx.supabase
       .from("users")
       .select("*")
-      .eq("id", user.id)
+      .eq("id", user?.id ?? "")
       .single();
 
     if (error) {
@@ -27,7 +27,7 @@ export const authRouter = createTRPCRouter({
       });
     }
 
-    return data
+    return data;
   }),
 
   getUser: publicProcedure

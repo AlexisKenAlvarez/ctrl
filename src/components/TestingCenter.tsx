@@ -65,7 +65,7 @@ const TestingCenter = ({
   return (
     <div className="mx-auto flex w-full flex-1 flex-col ">
       <div className="sticky top-[5.8rem] z-10 w-full ">
-        <div className="flex  h-20 w-full items-center justify-between bg-white px-5 py-4 drop-shadow-md">
+        <div className="flex  h-20 w-full items-center justify-between bg-white px-5 py-4">
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>
@@ -87,13 +87,13 @@ const TestingCenter = ({
       <div className="grid  w-fit grid-cols-2 gap-4 bg-white p-5 sm:grid-cols-3  md:grid-cols-4 lg:grid-cols-5 2xl:grid-cols-6">
         {centerData.map((item) => (
           <div className="h-auto" key={item.id}>
-              <div className="group relative h-fit w-full auto-rows-max auto-cols-min overflow-hidden rounded-lg">
-                <ImageSlider
-                  imageData={item.images}
-                  labId={item.id}
-                  deactivated={item.deactivated}
-                />
-              </div>
+            <div className="group relative h-fit w-full auto-cols-min auto-rows-max overflow-hidden rounded-lg">
+              <ImageSlider
+                imageData={item.images}
+                labId={item.id}
+                deactivated={item.deactivated}
+              />
+            </div>
             <div className="mt-3">
               <h1 className=" text-sm font-medium sm:text-base">{item.name}</h1>
               <p className="text-xs opacity-70 sm:text-sm">
@@ -178,7 +178,7 @@ const ImageSlider = ({
             if (image.thumbnail) {
               return (
                 <CarouselItem className="!h-full " key={image.id}>
-                  <AspectRatio ratio={1 / 1} className="w-full !h-full">
+                  <AspectRatio ratio={1 / 1} className="!h-full w-full">
                     <Image
                       onLoad={() => {
                         setImageLoading(false);
@@ -186,7 +186,7 @@ const ImageSlider = ({
                       src={image.url}
                       width={900}
                       height={900}
-                      className="h-full w-full object-cover object-center absolute bottom-0"
+                      className="absolute bottom-0 h-full w-full object-cover object-center"
                       alt={image.id.toString()}
                     />
                   </AspectRatio>
@@ -204,7 +204,7 @@ const ImageSlider = ({
                       src={image.url}
                       width={900}
                       height={900}
-                      className="h-full w-full object-cover object-center absolute bottom-0"
+                      className="absolute bottom-0 h-full w-full object-cover object-center"
                       alt={image.id.toString()}
                     />
                   </AspectRatio>

@@ -221,11 +221,12 @@ export const userRouter = createTRPCRouter({
 
       return data;
     }),
-  getHeroCenters: protectedProcedure
+  getHeroCenters: publicProcedure
     .input(
       z.object({
         status: z.enum(["all", "pending", "accepted", "rejected"]),
         search: z.string().nullable(),
+        filter: z.enum(["top-rated", "oldest", "newest"]).nullable(),
       }),
     )
     .query(async ({ input, ctx }) => {
@@ -237,24 +238,6 @@ export const userRouter = createTRPCRouter({
           .select(
             "*, location:locations(*), open_hour:open_hours(*), images(*)",
           )
-          .order("created_at", { ascending: false })
-
-        if (error) {
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: error.message,
-          });
-        }
-
-        return data
-
-      } else {
-        const { data, error } = await ctx.supabase
-          .from("testing_centers")
-          .select(
-            "*, location:locations(*), open_hour:open_hours(*), images(*)",
-          )
-          .eq("status", input.status)
           .order("created_at", { ascending: false });
 
         if (error) {
@@ -264,7 +247,77 @@ export const userRouter = createTRPCRouter({
           });
         }
 
-        return data
+        return data;
+      } else {
+        if (input.filter === "top-rated") {
+          const { data, error } = await ctx.supabase
+            .from("testing_centers_with_review_counts")
+            .select(
+              "*, location:locations(*), open_hour:open_hours(*), images(*)",
+            )
+            .eq("status", input.status)
+            .order("review_count", { ascending: false });
+
+          if (error) {
+            throw new TRPCError({
+              code: "INTERNAL_SERVER_ERROR",
+              message: error.message,
+            });
+          }
+
+          return data;
+        } else if (input.filter === "newest") {
+          const { data, error } = await ctx.supabase
+            .from("testing_centers")
+            .select(
+              "*, location:locations(*), open_hour:open_hours(*), images(*)",
+            )
+            .eq("status", input.status)
+            .order("created_at", { ascending: false });
+
+          if (error) {
+            throw new TRPCError({
+              code: "INTERNAL_SERVER_ERROR",
+              message: error.message,
+            });
+          }
+
+          return data;
+        } else if (input.filter === "oldest") {
+          const { data, error } = await ctx.supabase
+            .from("testing_centers")
+            .select(
+              "*, location:locations(*), open_hour:open_hours(*), images(*)",
+            )
+            .eq("status", input.status)
+            .order("created_at", { ascending: true });
+
+          if (error) {
+            throw new TRPCError({
+              code: "INTERNAL_SERVER_ERROR",
+              message: error.message,
+            });
+          }
+
+          return data;
+        } else {
+          const { data, error } = await ctx.supabase
+            .from("testing_centers")
+            .select(
+              "*, location:locations(*), open_hour:open_hours(*), images(*)",
+            )
+            .eq("status", input.status)
+            .order("created_at", { ascending: false });
+
+          if (error) {
+            throw new TRPCError({
+              code: "INTERNAL_SERVER_ERROR",
+              message: error.message,
+            });
+          }
+
+          return data;
+        }
       }
     }),
   getSingleCenter: publicProcedure
