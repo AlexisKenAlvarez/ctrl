@@ -71,6 +71,13 @@
     @apply border-border;
   }
 
+  .scroll-container {
+    &::-webkit-scrollbar {
+      display: none;
+    };
+    -webkit-overflow-scrolling: touch;
+  }
+
   body {
     @apply bg-background text-foreground;
   }

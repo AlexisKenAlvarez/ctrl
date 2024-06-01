@@ -65,7 +65,7 @@ const TestingCenter = ({
   return (
     <div className="mx-auto flex w-full flex-1 flex-col ">
       <div className="sticky top-[5.8rem] z-10 w-full ">
-        <div className="flex  h-20 w-full items-center justify-between bg-white px-5 py-4 drop-shadow-md">
+        <div className="flex  h-20 w-full items-center justify-between bg-white px-5 py-4">
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>
@@ -74,7 +74,7 @@ const TestingCenter = ({
             </BreadcrumbList>
           </Breadcrumb>
 
-          <Link href={`/testing-center/new`}>
+          <Link href={`/testing-lab/new`}>
             <Button className="space-x-2 rounded-full bg-blue hover:bg-blue/80">
               <Plus size={18} />
               <h1 className="">Add new </h1>
@@ -84,21 +84,19 @@ const TestingCenter = ({
         <Separator />
       </div>
 
-      <div className="grid  w-fit grid-cols-2 gap-4 bg-white p-5  sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5">
+      <div className="grid  w-fit grid-cols-2 gap-4 bg-white p-5 sm:grid-cols-3  md:grid-cols-4 lg:grid-cols-5 2xl:grid-cols-6">
         {centerData.map((item) => (
           <div className="h-auto" key={item.id}>
-            <AspectRatio ratio={1 / 1}>
-              <div className="group relative h-fit w-full auto-rows-max overflow-hidden rounded-lg">
-                <ImageSlider
-                  imageData={item.images}
-                  centerId={item.id}
-                  deactivated={item.deactivated}
-                />
-              </div>
-            </AspectRatio>
+            <div className="group relative h-fit w-full auto-cols-min auto-rows-max overflow-hidden rounded-lg">
+              <ImageSlider
+                imageData={item.images}
+                labId={item.id}
+                deactivated={item.deactivated}
+              />
+            </div>
             <div className="mt-3">
-              <h1 className=" font-medium">{item.name}</h1>
-              <p className="text-sm opacity-70">
+              <h1 className=" text-sm font-medium sm:text-base">{item.name}</h1>
+              <p className="text-xs opacity-70 sm:text-sm">
                 {item.location?.barangay}, {item.location?.city}{" "}
                 {item.location?.province}
               </p>
@@ -111,6 +109,8 @@ const TestingCenter = ({
                 <p
                   className={cn("text-sm capitalize", {
                     "text-orange-500": item.status === "pending",
+                    "text-red-500": item.status === "rejected",
+                    "text-green-500": item.status === "accepted",
                   })}
                 >
                   {item.status}
@@ -135,11 +135,11 @@ interface ImageType {
 
 const ImageSlider = ({
   imageData,
-  centerId,
+  labId,
   deactivated,
 }: {
   imageData: ImageType[];
-  centerId: number;
+  labId: number;
   deactivated: boolean;
 }) => {
   const [toDelete, setToDelete] = useState<number | null>(null);
@@ -167,7 +167,7 @@ const ImageSlider = ({
 
   return (
     <>
-      <Carousel setApi={setApi} className="h-full ">
+      <Carousel setApi={setApi} className="h-full bg-black">
         <CarouselContent className="">
           {imageLoading && (
             <AspectRatio ratio={1 / 1} className=" ">
@@ -177,8 +177,8 @@ const ImageSlider = ({
           {imageData.map((image) => {
             if (image.thumbnail) {
               return (
-                <CarouselItem className="h-full" key={image.id}>
-                  <AspectRatio ratio={1 / 1} className=" ">
+                <CarouselItem className="!h-full " key={image.id}>
+                  <AspectRatio ratio={1 / 1} className="!h-full w-full">
                     <Image
                       onLoad={() => {
                         setImageLoading(false);
@@ -186,7 +186,7 @@ const ImageSlider = ({
                       src={image.url}
                       width={900}
                       height={900}
-                      className="h-full w-full object-cover object-center"
+                      className="absolute bottom-0 h-full w-full object-cover object-center"
                       alt={image.id.toString()}
                     />
                   </AspectRatio>
@@ -198,13 +198,13 @@ const ImageSlider = ({
           {imageData.map((image) => {
             if (!image.thumbnail) {
               return (
-                <CarouselItem className="h-64 w-64" key={image.id}>
+                <CarouselItem className="" key={image.id}>
                   <AspectRatio ratio={1 / 1} className=" ">
                     <Image
                       src={image.url}
-                      width={500}
-                      height={500}
-                      className="h-full w-full object-cover object-center"
+                      width={900}
+                      height={900}
+                      className="absolute bottom-0 h-full w-full object-cover object-center"
                       alt={image.id.toString()}
                     />
                   </AspectRatio>
@@ -224,13 +224,16 @@ const ImageSlider = ({
               <EllipsisVertical size={20} />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <Link href={`/testing-center/edit/${centerId}`}>
+              <Link href={`/labs/${labId}`}>
+                <DropdownMenuItem>View</DropdownMenuItem>
+              </Link>
+              <Link href={`/testing-lab/edit/${labId}`}>
                 <DropdownMenuItem>Edit</DropdownMenuItem>
               </Link>
-              <DropdownMenuItem onClick={() => setToDeactivate(centerId)}>
+              <DropdownMenuItem onClick={() => setToDeactivate(labId)}>
                 {deactivated ? "Reactivate" : "Deactivate"}
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setToDelete(centerId)}>
+              <DropdownMenuItem onClick={() => setToDelete(labId)}>
                 Delete
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -256,7 +259,9 @@ const ImageSlider = ({
           <DialogHeader>
             <DialogTitle>Are you absolutely sure?</DialogTitle>
             <DialogDescription>
-              {deactivated ? "This will reactive your testing lab and will be visible again to users." : "This will remove your testing lab into the list of active centers and will not be visible to users until you reactivate it."}
+              {deactivated
+                ? "This will reactive your testing lab and will be visible again to users."
+                : "This will remove your testing lab into the list of active centers and will not be visible to users until you reactivate it."}
               <div className="mt-4 flex justify-end gap-2  ">
                 <Button variant="secondary">Cancel</Button>
 
@@ -264,7 +269,7 @@ const ImageSlider = ({
                   className="hover:bg-blue"
                   onClick={async () => {
                     await changeStatusMutation.mutateAsync({
-                      centerId,
+                      labId,
                       deactivated: !deactivated,
                     });
 
@@ -296,11 +301,11 @@ const ImageSlider = ({
                   className="hover:bg-blue"
                   onClick={async () => {
                     await deleteCenterMutation.mutateAsync({
-                      centerId: centerId,
+                      labId: labId,
                       images: imageData,
                     });
 
-                    setToDelete(null)
+                    setToDelete(null);
                     await utils.user.getCenters.invalidate();
                   }}
                 >

@@ -84,6 +84,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { RouterOutputs, api } from "@/trpc/react";
 import { supabase } from "supabase/supabaseClient";
 import SelectTime from "./SelectTime";
+import { isValidMapLink } from "@/utils/utils";
 
 interface DaysType {
   label: string;
@@ -99,10 +100,10 @@ interface ImagesType {
 
 const EditCenter = ({
   centerData,
-  centerId,
+  labId,
 }: {
   centerData: RouterOutputs["user"]["getSingleCenter"];
-  centerId: string;
+  labId: string;
 }) => {
   const user = supabase.auth.getSession();
   const router = useRouter();
@@ -199,7 +200,7 @@ const EditCenter = ({
   const { data: center, isFetched: centerFetched } =
     api.user.getSingleCenter.useQuery(
       {
-        id: centerId,
+        id: labId,
       },
       {
         initialData: centerData,
@@ -396,7 +397,7 @@ const EditCenter = ({
         }
       }),
     );
-  }, [centerFetched, center.open_hour]);
+  }, [centerFetched, center?.open_hour]);
 
   return (
     <div className="overflow relative mx-auto flex w-full flex-1 flex-col">
@@ -405,9 +406,7 @@ const EditCenter = ({
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>
-                <BreadcrumbLink href="/testing-center">
-                  Dashboard
-                </BreadcrumbLink>
+                <BreadcrumbLink href="/testing-lab">Dashboard</BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator />
               <BreadcrumbItem>
@@ -425,63 +424,65 @@ const EditCenter = ({
             )}
             disabled={!form.formState.isValid}
             onClick={form.handleSubmit(async (values) => {
-              console.log("Old hour", ogDaysValue);
-              console.log("New hour", daysValue);
-              setDebounce(true);
-              try {
-                await editCenterMutation.mutateAsync({
-                  centerId: centerId,
-                  oldValues: {
-                    name: center.name,
-                    province: center.location!.province,
-                    city: center.location!.city,
-                    region: center.location!.region,
-                    barangay: center.location!.barangay,
-                    zip: center.location!.zip.toString(),
-                    landmark: center.location!.landmark,
-                    services: center.services,
-                    facebook: center.facebook,
-                    contact: center.contact.toString(),
-                    google_map: center.google_map,
-                  },
-                  old_thumbnail: center.images.find((img) => img.thumbnail)!
-                    .name,
-                  old_open_hours: ogDaysValue,
-                  newValues: {
-                    ...values,
-                  },
-                  new_open_hours: daysValue,
-                  new_thumbnail: thumbnail,
-                  thumbnailChanged: thumbnail !== "",
-                  imageChanged: previewImage !== null,
-                  images: center.images,
-                });
+              if (!debounce) {
+                setDebounce(true);
 
-                if (previewImage !== null) {
-                  await startUpload(files, {
-                    preview: previewImage,
-                    testing_center_id: parseInt(centerId),
+                try {
+                  await editCenterMutation.mutateAsync({
+                    labId: labId,
+                    oldValues: {
+                      name: center.name,
+                      province: center.location!.province,
+                      city: center.location!.city,
+                      region: center.location!.region,
+                      barangay: center.location!.barangay,
+                      zip: center.location!.zip.toString(),
+                      landmark: center.location!.landmark,
+                      services: center.services,
+                      facebook: center.facebook,
+                      contact: center.contact.toString(),
+                      google_map: center.google_map,
+                    },
+                    old_thumbnail: center.images.find((img) => img.thumbnail)!
+                      .name,
+                    old_open_hours: ogDaysValue,
+                    newValues: {
+                      ...values,
+                    },
+                    new_open_hours: daysValue,
+                    new_thumbnail: thumbnail,
+                    thumbnailChanged: thumbnail !== "",
+                    imageChanged: previewImage !== null,
+                    images: center.images,
                   });
+
+                  if (previewImage !== null) {
+                    await startUpload(files, {
+                      preview: previewImage,
+                      testing_center_id: parseInt(labId),
+                    });
+                  }
+
+                  form.setValue("name", values.name);
+                  form.setValue("region", values.region);
+                  form.setValue("province", values.province);
+                  form.setValue("city", values.city);
+                  form.setValue("barangay", values.barangay);
+                  form.setValue("zip", values.zip);
+                  form.setValue("landmark", values.landmark);
+                  form.setValue("services", values.services);
+                  form.setValue("facebook", values.facebook);
+                  form.setValue("contact", values.contact);
+                  form.setValue("google_map", values.google_map);
+
+                  window.location.href = "/testing-lab";
+                  console.log("Edit success");
+                  await utils.user.getCenters.invalidate();
+                } catch (error) {
+                  console.log(error);
                 }
-
-                form.setValue("name", values.name);
-                form.setValue("region", values.region);
-                form.setValue("province", values.province);
-                form.setValue("city", values.city);
-                form.setValue("barangay", values.barangay);
-                form.setValue("zip", values.zip);
-                form.setValue("landmark", values.landmark);
-                form.setValue("services", values.services);
-                form.setValue("facebook", values.facebook);
-                form.setValue("contact", values.contact);
-                form.setValue("google_map", values.google_map);
-
-                window.location.href = "/testing-center";
-                console.log("Edit success");
-                await utils.user.getCenters.invalidate();
-              } catch (error) {
-                console.log(error);
               }
+
               setDebounce(false);
             })}
           >
@@ -803,8 +804,9 @@ const EditCenter = ({
                             <FormLabel>Region</FormLabel>
                             <FormControl>
                               <Select
-                                value=""
-                                defaultValue=""
+                                value={field.value}
+                                defaultValue={field.value}
+                                disabled
                                 key={field.name}
                                 onValueChange={async (value) => {
                                   form.setValue("province", "");
@@ -865,8 +867,9 @@ const EditCenter = ({
                             <FormLabel>Province</FormLabel>
                             <FormControl>
                               <Select
-                                value=""
-                                defaultValue=""
+                                value={field.value}
+                                defaultValue={field.value}
+                                disabled
                                 key={field.name}
                                 onValueChange={async (value) => {
                                   form.setValue("city", "");
@@ -1112,7 +1115,7 @@ const EditCenter = ({
                           />
                         </FormControl>
                         <FormDescription>
-                          This will help users find your location.
+                          Share &gt; Embed a map &gt; COPY HTML
                         </FormDescription>
                         <FormMessage />
                       </FormItem>

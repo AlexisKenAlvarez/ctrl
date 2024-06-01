@@ -68,6 +68,13 @@ export type Database = {
             referencedRelation: "testing_centers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "images_testing_center_fkey"
+            columns: ["testing_center"]
+            isOneToOne: false
+            referencedRelation: "testing_centers_with_review_counts"
+            referencedColumns: ["id"]
+          },
         ]
       }
       locations: {
@@ -109,6 +116,13 @@ export type Database = {
             referencedRelation: "testing_centers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "location_testing_center_fkey"
+            columns: ["testing_center"]
+            isOneToOne: true
+            referencedRelation: "testing_centers_with_review_counts"
+            referencedColumns: ["id"]
+          },
         ]
       }
       open_hours: {
@@ -139,6 +153,62 @@ export type Database = {
             columns: ["testing_center"]
             isOneToOne: false
             referencedRelation: "testing_centers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "open_hours_testing_center_fkey"
+            columns: ["testing_center"]
+            isOneToOne: false
+            referencedRelation: "testing_centers_with_review_counts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reviews: {
+        Row: {
+          author: string
+          created_at: string
+          id: number
+          rating: number
+          testing_center: number
+          text: string
+        }
+        Insert: {
+          author?: string
+          created_at?: string
+          id?: number
+          rating: number
+          testing_center: number
+          text: string
+        }
+        Update: {
+          author?: string
+          created_at?: string
+          id?: number
+          rating?: number
+          testing_center?: number
+          text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_author_fkey"
+            columns: ["author"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_testing_center_fkey"
+            columns: ["testing_center"]
+            isOneToOne: false
+            referencedRelation: "testing_centers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_testing_center_fkey"
+            columns: ["testing_center"]
+            isOneToOne: false
+            referencedRelation: "testing_centers_with_review_counts"
             referencedColumns: ["id"]
           },
         ]
@@ -188,7 +258,7 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "testing_centers_owner_fkey"
+            foreignKeyName: "testing_centers_owner_fkey1"
             columns: ["owner"]
             isOneToOne: false
             referencedRelation: "users"
@@ -202,6 +272,7 @@ export type Database = {
           email: string
           full_name: string
           id: string
+          image: string | null
           user_role: Database["public"]["Enums"]["user_role_enum"] | null
         }
         Insert: {
@@ -209,6 +280,7 @@ export type Database = {
           email: string
           full_name: string
           id?: string
+          image?: string | null
           user_role?: Database["public"]["Enums"]["user_role_enum"] | null
         }
         Update: {
@@ -216,16 +288,69 @@ export type Database = {
           email?: string
           full_name?: string
           id?: string
+          image?: string | null
           user_role?: Database["public"]["Enums"]["user_role_enum"] | null
         }
         Relationships: []
       }
     }
     Views: {
-      [_ in never]: never
+      testing_centers_with_review_counts: {
+        Row: {
+          contact: number | null
+          created_at: string | null
+          deactivated: boolean | null
+          facebook: string | null
+          google_map: string | null
+          id: number | null
+          name: string | null
+          owner: string | null
+          review_count: number | null
+          services: string | null
+          status:
+            | Database["public"]["Enums"]["testing_center_status_enum"]
+            | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "testing_centers_owner_fkey1"
+            columns: ["owner"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
-      [_ in never]: never
+      getaverage: {
+        Args: {
+          labid: number
+        }
+        Returns: {
+          avg_rating: number
+          rating_count: number
+        }[]
+      }
+      search_location: {
+        Args: {
+          keyword: string
+        }
+        Returns: {
+          contact: number
+          created_at: string
+          deactivated: boolean
+          facebook: string
+          google_map: string | null
+          id: number
+          name: string
+          owner: string
+          services: string
+          status:
+            | Database["public"]["Enums"]["testing_center_status_enum"]
+            | null
+        }[]
+      }
     }
     Enums: {
       day_enum:

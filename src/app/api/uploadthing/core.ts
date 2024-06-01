@@ -53,6 +53,42 @@ export const ourFileRouter = {
 
       return { name: file.name };
     }),
+  profileUploader: f({ image: { maxFileSize: "4MB", maxFileCount: 1 } })
+    // Set permissions and file types for this FileRoute
+    .input(
+      z.object({
+        userId: z.string().uuid(),
+        imageChanged: z.boolean(),
+        oldImage: z.string().nullable(),
+      }),
+    )
+    .middleware(({ input }) => {
+      return {
+        userId: input.userId,
+        imageChanged: input.imageChanged,
+        oldImage: input.oldImage,
+      };
+    })
+    .onUploadComplete(async ({ file, metadata }) => {
+      // This code RUNS ON YOUR SERVER after upload
+      const userId = metadata.userId;
+      // const center_id = metadata.id;
+      const url = file.url;
+
+      try {
+        await api.user.uploadProfile({
+          userId,
+          imageUrl: url,
+          imageChanged: metadata.imageChanged,
+          oldImage: metadata.oldImage,
+        });
+      } catch (error) {
+        console.log(error);
+        throw new UploadThingError("Failed to add image to database");
+      }
+
+      return { name: file.name };
+    }),
 } satisfies FileRouter;
 
 export type OurFileRouter = typeof ourFileRouter;
