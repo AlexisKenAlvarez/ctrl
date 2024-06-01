@@ -185,11 +185,29 @@ export const userRouter = createTRPCRouter({
     .input(
       z.object({
         status: z.enum(["all", "pending", "accepted", "rejected"]),
-        owner: z.string(),
+        owner: z.string().nullable(),
       }),
     )
     .query(async ({ input, ctx }) => {
-      if (input.status === "all") {
+      if (input.status === "all" && !input.owner) {
+        const { data, error } = await ctx.supabase
+          .from("testing_centers")
+          .select(
+            "*, location:locations(*), open_hour:open_hours(*), images(*)",
+          )
+          .order("created_at", { ascending: false });
+
+        if (error) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: error.message,
+          });
+        }
+
+        return data;
+      }
+
+      if (input.status === "all" && input.owner) {
         const { data, error } = await ctx.supabase
           .from("testing_centers")
           .select(
