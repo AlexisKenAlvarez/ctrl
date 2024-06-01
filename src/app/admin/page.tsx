@@ -1,12 +1,11 @@
-import { api } from "@/trpc/server";
+import AdminDashboard from "@/components/AdminDashboard";
 
 const page = async () => {
-  const centers = await api.user.getCenters({
-    status: "all",
-    owner: null,
-  });
-
-  return <div>Enter</div>;
+  return (
+    <div>
+      <AdminDashboard  />
+    </div>
+  );
 };
 
 export default page;

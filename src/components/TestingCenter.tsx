@@ -87,7 +87,7 @@ const TestingCenter = ({
       <div className="grid  w-fit grid-cols-2 gap-4 bg-white p-5 sm:grid-cols-3  md:grid-cols-4 lg:grid-cols-5 2xl:grid-cols-6">
         {centerData.map((item) => (
           <div className="h-auto" key={item.id}>
-            <div className="group relative h-fit w-full auto-cols-min auto-rows-max overflow-hidden rounded-lg">
+            <div className="group relative h-fit w-full auto-cols-min auto-rows-max overflow-hidden rounded-lg  lg:min-w-40 2xl:min-w-[18rem]">
               <ImageSlider
                 imageData={item.images}
                 labId={item.id}

@@ -85,6 +85,7 @@ import { RouterOutputs, api } from "@/trpc/react";
 import { supabase } from "supabase/supabaseClient";
 import SelectTime from "./SelectTime";
 import { isValidMapLink } from "@/utils/utils";
+import { toast } from "sonner";
 
 interface DaysType {
   label: string;
@@ -401,7 +402,7 @@ const EditCenter = ({
 
   return (
     <div className="overflow relative mx-auto flex w-full flex-1 flex-col">
-      <div className="sticky top-[5.8rem] z-10 w-full drop-shadow-md">
+      <div className="sticky top-[5.8rem] z-10 w-full">
         <div className="flex h-20 w-full items-center justify-between bg-white px-5 py-4">
           <Breadcrumb>
             <BreadcrumbList>
@@ -475,8 +476,9 @@ const EditCenter = ({
                   form.setValue("contact", values.contact);
                   form.setValue("google_map", values.google_map);
 
-                  window.location.href = "/testing-lab";
                   console.log("Edit success");
+                  toast.success("Edit success");
+                  router.refresh()
                   await utils.user.getCenters.invalidate();
                 } catch (error) {
                   console.log(error);
