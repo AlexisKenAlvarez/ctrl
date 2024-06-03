@@ -53,7 +53,7 @@ const nav = [
 
 const AdminDashboard = () => {
   const searchParams = useSearchParams();
-  const { data: centerData } = api.user.getCenters.useQuery({
+  const { data: centerData, isPending } = api.user.getCenters.useQuery({
     status:
       (searchParams.get("status") as
         | "pending"
@@ -108,7 +108,7 @@ const AdminDashboard = () => {
             </Link>
           ))}
         </div>
-        <Link href={'/admin/accounts'}>
+        <Link href={"/admin/accounts"}>
           <Button
             className=" rounded-full hover:bg-blue hover:text-white"
             variant="secondary"
@@ -118,7 +118,16 @@ const AdminDashboard = () => {
         </Link>
       </div>
 
-      {centerData?.length === 0 ? (
+      {isPending ? (
+        <div className="grid  w-full flex-1 grid-cols-2 gap-4 bg-white p-5 sm:grid-cols-3  md:grid-cols-4 lg:grid-cols-5 2xl:grid-cols-6">
+          {Array.from({ length: 20 }).map((_, index) => (
+            <div className="space-y-2" key={index}>
+              <Skeleton className="lg:min-h-40 lg:min-w-40 2xl:min-h-64 2xl:min-w-64" />
+              <Skeleton className="h-10" />
+            </div>
+          ))}
+        </div>
+      ) : centerData?.length === 0 ? (
         <div className="mx-auto grid h-full w-full flex-1 place-content-center text-center opacity-80">
           <Frown className="mx-auto" strokeWidth={0.7} size={44} />
           <h2 className="mt-3">No Results</h2>

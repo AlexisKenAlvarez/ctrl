@@ -89,19 +89,26 @@ const Signin = () => {
         onSubmit={form.handleSubmit(async (data: formType) => {
           try {
             setDebounce(true);
-            const { data: signinData } = await supabase.auth.signInWithPassword(
-              {
+            const { data: signinData, error } =
+              await supabase.auth.signInWithPassword({
                 email: data.email,
                 password: data.password,
-              },
-            );
+              });
+
+            if (error) {
+              form.setError("email", {
+                message: "Invalid email or password",
+              });
+              setDebounce(false);
+              return;
+            }
 
             const userData = await getUserMutation.mutateAsync({
-              id: signinData.user!.id,
+              id: signinData.user.id,
             });
-            
+
             if (userData.deactivated) {
-              await supabase.auth.signOut()
+              await supabase.auth.signOut();
               toast.error("Your account has been deactivated.");
               setDebounce(false);
               return;

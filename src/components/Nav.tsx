@@ -82,130 +82,128 @@ const Nav = ({
             />
           </Link>
 
+          <div
+            className={cn(
+              "relative h-fit w-full max-w-[24rem] transition-all duration-300 ease-in-out",
+              {
+                "lg:max-w-[28rem]": focused,
+              },
+            )}
+          >
+            <Input
+              onFocus={() => setFocused(true)}
+              onBlur={() => setFocused(false)}
+              onKeyDown={async (e) => {
+                if (result.length === 0) {
+                  setSelected(null);
+                }
+
+                if (e.key === "ArrowDown") {
+                  e.preventDefault();
+                  setSelected((prev) =>
+                    prev === null ? 0 : Math.min(prev + 1, result.length - 1),
+                  );
+                } else if (e.key === "ArrowUp") {
+                  e.preventDefault();
+
+                  setSelected((prev) =>
+                    prev === null ? 0 : Math.max(prev - 1, 0),
+                  );
+                } else if (e.key === "Enter") {
+                  if (
+                    (selected === null || result.length <= 0) &&
+                    search !== ""
+                  ) {
+                    router.push(`/?search=${search}`);
+                  } else if (selected !== null) {
+                    const selectedResult = result[selected ?? 0];
+                    router.push(`/?search=${selectedResult?.name}`);
+                  }
+                }
+              }}
+              placeholder="Search for location"
+              onChange={(e) => {
+                setSearch(e.target.value);
+                const searchQuery = e.target.value;
+
+                const searchBarangay = (query: string) => {
+                  const barangayResult = barangays.filter(query);
+
+                  const newResult = barangayResult
+                    .filter((barangay) =>
+                      barangay.code.toString().startsWith("0421"),
+                    )
+                    .slice(0, 5);
+
+                  return newResult;
+                };
+
+                const searchCity = (query: string) => {
+                  const regex = new RegExp(`^${query}`, "i");
+
+                  const regData = citiesData.filter((city) =>
+                    regex.test(city.city_name),
+                  );
+
+                  return regData;
+                };
+
+                if (searchBarangay(searchQuery).length > 0) {
+                  setResult(
+                    searchBarangay(searchQuery).map((barangay) => {
+                      return {
+                        name: `${barangay.name}, ${barangay.citymun}`,
+                      };
+                    }),
+                  );
+                } else if (searchCity(searchQuery).length > 0) {
+                  setResult(
+                    searchCity(searchQuery).map((city) => {
+                      return {
+                        name: city.city_name,
+                      };
+                    }),
+                  );
+                } else {
+                  setResult([]);
+                }
+              }}
+              value={search}
+              className="w-full rounded-full drop-shadow-md transition-all duration-300 ease-in-out sm:py-6"
+            />
+
+            <Button className="absolute bottom-0 right-2 top-0 my-auto h-7 w-7 shrink-0 rounded-full bg-blue hover:bg-blue/80 sm:h-9 sm:w-9">
+              <Search className="absolute" size={18} />
+            </Button>
+
+            {focused && result.length > 0 && (
+              <ul className="absolute -bottom-2 w-full translate-y-full rounded-3xl border bg-white  p-3 drop-shadow-md">
+                {result.map((item, index) => (
+                  <li
+                    className={cn(
+                      "flex cursor-pointer items-center gap-2 rounded-xl p-3 text-sm font-light hover:bg-slate-100",
+                      {
+                        "bg-slate-100": selected === index,
+                      },
+                    )}
+                    key={index}
+                    onMouseDown={() => {
+                      console.log("CLICKED");
+                      router.push(`/?search=${item.name}`);
+                    }}
+                  >
+                    <div className="w-fit rounded-lg bg-gray-200 p-2">
+                      <MapPin strokeWidth={1} />
+                    </div>
+                    <h1>{item.name}</h1>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
           {isLoggedIn ? (
             <>
-              <div
-                className={cn(
-                  "relative h-fit w-full max-w-[24rem] transition-all duration-300 ease-in-out",
-                  {
-                    "lg:max-w-[28rem]": focused,
-                  },
-                )}
-              >
-                <Input
-                  onFocus={() => setFocused(true)}
-                  onBlur={() => setFocused(false)}
-                  onKeyDown={async (e) => {
-                    if (result.length === 0) {
-                      setSelected(null);
-                    }
-
-                    if (e.key === "ArrowDown") {
-                      e.preventDefault();
-                      setSelected((prev) =>
-                        prev === null
-                          ? 0
-                          : Math.min(prev + 1, result.length - 1),
-                      );
-                    } else if (e.key === "ArrowUp") {
-                      e.preventDefault();
-
-                      setSelected((prev) =>
-                        prev === null ? 0 : Math.max(prev - 1, 0),
-                      );
-                    } else if (e.key === "Enter") {
-                      if (
-                        (selected === null || result.length <= 0) &&
-                        search !== ""
-                      ) {
-                        router.push(`/?search=${search}`);
-                      } else if (selected !== null) {
-                        const selectedResult = result[selected ?? 0];
-                        router.push(`/?search=${selectedResult?.name}`);
-                      }
-                    }
-                  }}
-                  placeholder="Search for location"
-                  onChange={(e) => {
-                    setSearch(e.target.value);
-                    const searchQuery = e.target.value;
-
-                    const searchBarangay = (query: string) => {
-                      const barangayResult = barangays.filter(query);
-
-                      const newResult = barangayResult
-                        .filter((barangay) =>
-                          barangay.code.toString().startsWith("0421"),
-                        )
-                        .slice(0, 5);
-
-                      return newResult;
-                    };
-
-                    const searchCity = (query: string) => {
-                      const regex = new RegExp(`^${query}`, "i");
-
-                      const regData = citiesData.filter((city) =>
-                        regex.test(city.city_name),
-                      );
-
-                      return regData;
-                    };
-
-                    if (searchBarangay(searchQuery).length > 0) {
-                      setResult(
-                        searchBarangay(searchQuery).map((barangay) => {
-                          return {
-                            name: `${barangay.name}, ${barangay.citymun}`,
-                          };
-                        }),
-                      );
-                    } else if (searchCity(searchQuery).length > 0) {
-                      setResult(
-                        searchCity(searchQuery).map((city) => {
-                          return {
-                            name: city.city_name,
-                          };
-                        }),
-                      );
-                    } else {
-                      setResult([]);
-                    }
-                  }}
-                  value={search}
-                  className="w-full rounded-full drop-shadow-md transition-all duration-300 ease-in-out sm:py-6"
-                />
-
-                <Button className="absolute bottom-0 right-2 top-0 my-auto h-7 w-7 shrink-0 rounded-full bg-blue hover:bg-blue/80 sm:h-9 sm:w-9">
-                  <Search className="absolute" size={18} />
-                </Button>
-
-                {focused && result.length > 0 && (
-                  <ul className="absolute -bottom-2 w-full translate-y-full rounded-3xl border bg-white  p-3 drop-shadow-md">
-                    {result.map((item, index) => (
-                      <li
-                        className={cn(
-                          "flex cursor-pointer items-center gap-2 rounded-xl p-3 text-sm font-light hover:bg-slate-100",
-                          {
-                            "bg-slate-100": selected === index,
-                          },
-                        )}
-                        key={index}
-                        onMouseDown={() => {
-                          console.log("CLICKED");
-                          router.push(`/?search=${item.name}`);
-                        }}
-                      >
-                        <div className="w-fit rounded-lg bg-gray-200 p-2">
-                          <MapPin strokeWidth={1} />
-                        </div>
-                        <h1>{item.name}</h1>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button className="space-x-3 rounded-full p-6  hover:bg-blue/90">
@@ -236,7 +234,7 @@ const Nav = ({
                       console.log("SIGNOUT");
                       await supabase.auth.signOut();
                       console.log("SIGNOUT2");
-                      router.refresh()
+                      router.refresh();
                     }}
                     className="p-3"
                   >
