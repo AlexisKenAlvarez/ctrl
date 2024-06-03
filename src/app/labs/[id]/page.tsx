@@ -22,14 +22,17 @@ const page = async ({ params }: { params: { id: string } }) => {
   const isAuthor = labData.owner === user?.id;
   const isNotAccepted = labData.status !== "accepted";
   const isAdmin = user?.user_role === "admin";
+  const isDeactivated = labData.deactivated;
 
   if (isAdmin || isAuthor) {
     return <LabView labData={labData} labId={labId} reviewsData={reviews} />;
   }
 
   if (isNotAccepted) {
-    console.log("🚀 ~ page ~ isNotAccepted:", isNotAccepted);
-    console.log("Redirect");
+    redirect("/");
+  }
+
+  if (isDeactivated && (user?.user_role === "user" || !isAuthor)) {
     redirect("/");
   }
 

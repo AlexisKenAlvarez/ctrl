@@ -32,11 +32,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
 import useGetSession from "@/utils/useGetSession";
+import { extractSrcUrl } from "@/utils/utils";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Textarea } from "./ui/textarea";
 import ImageSlider from "./ImageSlider";
-import { extractSrcUrl } from "@/utils/utils";
+import { Textarea } from "./ui/textarea";
 
 const rateStatus = [
   {
@@ -82,7 +82,6 @@ const LabView = ({
       initialData: labData,
     },
   );
-  console.log("🚀 ~ lab:", lab);
 
   const { data: reviews } = api.user.getReviews.useQuery(
     {
@@ -134,6 +133,14 @@ const LabView = ({
           }
         >
           <b>Status:</b> {lab.status}
+        </div>
+      )}
+      {lab.deactivated && (
+        <div
+          className="mb-4 w-full rounded-lg  p-3 capitalize"
+          style={{ backgroundColor: "#f87171", color: "white" }}
+        >
+          <b>Status:</b> Deactivated
         </div>
       )}
       <div className="hidden h-[26rem] w-full gap-2 overflow-hidden rounded-2xl md:flex">
@@ -446,7 +453,7 @@ const LabView = ({
                           rating: rate,
                         });
 
-                        await utils.user.getSingleCenter.invalidate()
+                        await utils.user.getSingleCenter.invalidate();
                         toast.success("Review added successfully");
                         form.reset();
                         setRate(0);

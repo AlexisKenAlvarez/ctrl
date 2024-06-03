@@ -16,6 +16,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { supabase } from "supabase/supabaseClient";
 import { z } from "zod";
 
@@ -98,7 +99,13 @@ const Signin = () => {
             const userData = await getUserMutation.mutateAsync({
               id: signinData.user!.id,
             });
-            console.log("🚀 ~ onSubmit={form.handleSubmit ~ userData:", userData)
+            
+            if (userData.deactivated) {
+              await supabase.auth.signOut()
+              toast.error("Your account has been deactivated.");
+              setDebounce(false);
+              return;
+            }
 
             await supabase.auth.updateUser({
               data: {

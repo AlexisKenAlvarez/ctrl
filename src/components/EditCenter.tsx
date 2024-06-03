@@ -7,13 +7,12 @@ import { cn } from "@/lib/utils";
 import { useUploadThing } from "@/utils/uploadthing";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useDropzone } from "@uploadthing/react";
-import { Router, Upload } from "lucide-react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { generateClientDropzoneAccept } from "uploadthing/client";
-import { set, z } from "zod";
-import { useRouter } from "next/navigation";
+import { z } from "zod";
 
 interface LocationInterface {
   regions: {
@@ -81,11 +80,10 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Checkbox } from "@/components/ui/checkbox";
-import { RouterOutputs, api } from "@/trpc/react";
-import { supabase } from "supabase/supabaseClient";
-import SelectTime from "./SelectTime";
-import { isValidMapLink } from "@/utils/utils";
+import type { RouterOutputs } from "@/trpc/react";
+import { api } from "@/trpc/react";
 import { toast } from "sonner";
+import SelectTime from "./SelectTime";
 
 interface DaysType {
   label: string;
@@ -106,7 +104,6 @@ const EditCenter = ({
   centerData: RouterOutputs["user"]["getSingleCenter"];
   labId: string;
 }) => {
-  const user = supabase.auth.getSession();
   const router = useRouter();
   const [daysValue, setDaysValue] = useState<DaysType[]>([
     {
