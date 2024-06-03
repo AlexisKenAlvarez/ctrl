@@ -292,6 +292,7 @@ export const userRouter = createTRPCRouter({
               "*, location:locations(*), open_hour:open_hours(*), images(*)",
             )
             .eq("status", input.status)
+            .eq("deactivated", false)
             .order("created_at", { ascending: false });
 
           if (error) {
@@ -309,6 +310,8 @@ export const userRouter = createTRPCRouter({
               "*, location:locations(*), open_hour:open_hours(*), images(*)",
             )
             .eq("status", input.status)
+            .eq("deactivated", false)
+
             .order("created_at", { ascending: true });
 
           if (error) {
@@ -326,6 +329,8 @@ export const userRouter = createTRPCRouter({
               "*, location:locations(*), open_hour:open_hours(*), images(*)",
             )
             .eq("status", input.status)
+            .eq("deactivated", false)
+
             .order("created_at", { ascending: false });
 
           if (error) {
