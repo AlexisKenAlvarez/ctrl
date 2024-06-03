@@ -6,10 +6,9 @@ import {
   protectedProcedure,
   publicProcedure,
 } from "@/server/api/trpc";
+import { utapi } from "@/server/uploadthing";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { utapi } from "@/server/uploadthing";
-import { Database } from "@/lib/types";
 
 const centerValues = z.object({
   name: z.string().min(1),
@@ -193,7 +192,7 @@ export const userRouter = createTRPCRouter({
         const { data, error } = await ctx.supabase
           .from("testing_centers")
           .select(
-            "*, location:locations(*), open_hour:open_hours(*), images(*)",
+            "*, location:locations(*), open_hour:open_hours(*), images(*), owner_data:users(*)",
           )
           .order("created_at", { ascending: false });
 
@@ -211,7 +210,7 @@ export const userRouter = createTRPCRouter({
         const { data, error } = await ctx.supabase
           .from("testing_centers")
           .select(
-            "*, location:locations(*), open_hour:open_hours(*), images(*)",
+            "*, location:locations(*), open_hour:open_hours(*), images(*), owner_data:users(*)",
           )
           .eq("owner", input.owner)
           .order("created_at", { ascending: false });
@@ -227,7 +226,9 @@ export const userRouter = createTRPCRouter({
       }
       const { data, error } = await ctx.supabase
         .from("testing_centers")
-        .select("*, location:locations(*), open_hour:open_hours(*), images(*)")
+        .select(
+          "*, location:locations(*), open_hour:open_hours(*), images(*), owner_data:users(*)",
+        )
         .eq("status", input.status);
 
       if (error) {
@@ -644,7 +645,7 @@ export const userRouter = createTRPCRouter({
         });
       }
     }),
-  changeCenterStatus: protectedProcedure
+  changeCenterDeactivated: protectedProcedure
     .input(
       z.object({
         labId: z.number(),
@@ -752,6 +753,54 @@ export const userRouter = createTRPCRouter({
 
         await utapi.deleteFiles(fileKey!);
       }
+
+      if (error) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: error.message,
+        });
+      }
+
+      return true;
+    }),
+  changeCenterStatus: protectedProcedure
+    .input(
+      z.object({
+        labId: z.number(),
+        status: z.enum(["pending", "accepted", "rejected"]),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      const { error } = await ctx.supabase
+        .from("testing_centers")
+        .update({
+          status: input.status,
+        })
+        .eq("id", input.labId);
+
+      if (error) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: error.message,
+        });
+      }
+
+      return true;
+    }),
+  updateUserStatus: protectedProcedure
+    .input(
+      z.object({
+        email: z.string().email(),
+        deactivate: z.boolean(),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      const { error } = await ctx.supabase
+        .from("users")
+        .update({
+          deactivated: input.deactivate,
+        })
+        .eq("email", input.email);
 
       if (error) {
         throw new TRPCError({

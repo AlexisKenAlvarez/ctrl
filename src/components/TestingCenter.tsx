@@ -1,11 +1,10 @@
 "use client";
 
-import { Plus } from "lucide-react";
+import { EllipsisVertical, Plus } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { Button } from "./ui/button";
 import { Separator } from "./ui/separator";
-import Image from "next/image";
-import { EllipsisVertical } from "lucide-react";
 
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 
@@ -22,7 +21,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 
 import {
@@ -31,8 +29,8 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
 } from "@/components/ui/breadcrumb";
-import { api, type RouterOutputs } from "@/trpc/react";
 import { type CarouselApi } from "@/components/ui/carousel";
+import { api, type RouterOutputs } from "@/trpc/react";
 
 import {
   Carousel,
@@ -41,9 +39,9 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { useEffect, useState } from "react";
 
 const TestingCenter = ({
   centersData,
@@ -87,7 +85,7 @@ const TestingCenter = ({
       <div className="grid  w-fit grid-cols-2 gap-4 bg-white p-5 sm:grid-cols-3  md:grid-cols-4 lg:grid-cols-5 2xl:grid-cols-6">
         {centerData.map((item) => (
           <div className="h-auto" key={item.id}>
-            <div className="group relative h-fit w-full auto-cols-min auto-rows-max overflow-hidden rounded-lg">
+            <div className="group relative h-fit w-full auto-cols-min auto-rows-max overflow-hidden rounded-lg  lg:min-w-40 2xl:min-w-[18rem]">
               <ImageSlider
                 imageData={item.images}
                 labId={item.id}
@@ -148,7 +146,7 @@ const ImageSlider = ({
 
   const [menuOpen, setMenuOpen] = useState(false);
   const deleteCenterMutation = api.user.deleteCenter.useMutation();
-  const changeStatusMutation = api.user.changeCenterStatus.useMutation();
+  const changeCenterDeactivated = api.user.changeCenterDeactivated.useMutation();
   const [imageLoading, setImageLoading] = useState(true);
   const [cApi, setApi] = useState<CarouselApi>();
   const [current, setCurrent] = useState(0);
@@ -268,7 +266,7 @@ const ImageSlider = ({
                 <Button
                   className="hover:bg-blue"
                   onClick={async () => {
-                    await changeStatusMutation.mutateAsync({
+                    await changeCenterDeactivated.mutateAsync({
                       labId,
                       deactivated: !deactivated,
                     });

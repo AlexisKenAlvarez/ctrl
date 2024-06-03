@@ -12,12 +12,16 @@ const page = async ({
   };
 }) => {
   const labId = params.id;
-  const user = await api.auth.getSession()
+  const user = await api.auth.getUserFromSession()
   const centerData = await api.user.getSingleCenter({
     id: labId,
   });
 
-  if (centerData.owner !== user.user?.id) {
+  if (user?.user_role === 'admin') {
+    return <EditCenter centerData={centerData} labId={labId} />;
+  }
+
+  if (centerData.owner !== user?.id) {
     redirect("/")
   }
 
