@@ -163,7 +163,7 @@ const Hero = () => {
         <div className="mt-14 grid w-full grid-cols-2 items-start  gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 2xl:grid-cols-6 ">
           {Array.from({ length: 20 }).map((_, index) => (
             <div className="space-y-2" key={index}>
-              <Skeleton className="lg:min-h-40 lg:min-w-40 2xl:min-h-64 2xl:min-w-64" />
+              <Skeleton className="lg:min-h-40 lg:min-w-40 2xl:min-h-64" />
               <Skeleton className="h-10" />
             </div>
           ))}
@@ -176,7 +176,7 @@ const Hero = () => {
               key={item.id}
               onClick={() => router.push(`/labs/${item.id}`)}
             >
-              <div className="group relative h-fit auto-cols-min auto-rows-max overflow-hidden rounded-lg lg:min-w-40 2xl:min-w-64">
+              <div className="group relative h-fit auto-cols-min auto-rows-max overflow-hidden rounded-lg lg:min-w-40">
                 <ImageSlider imageData={item.images} />
               </div>
               <div className="mt-3">

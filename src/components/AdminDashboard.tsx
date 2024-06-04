@@ -122,7 +122,7 @@ const AdminDashboard = () => {
         <div className="grid  w-full flex-1 grid-cols-2 gap-4 bg-white p-5 sm:grid-cols-3  md:grid-cols-4 lg:grid-cols-5 2xl:grid-cols-6">
           {Array.from({ length: 20 }).map((_, index) => (
             <div className="space-y-2" key={index}>
-              <Skeleton className="lg:min-h-40 lg:min-w-40 2xl:min-h-64 2xl:min-w-64" />
+              <Skeleton className="lg:min-h-40 lg:min-w-40 2xl:min-h-64" />
               <Skeleton className="h-10" />
             </div>
           ))}
@@ -136,7 +136,7 @@ const AdminDashboard = () => {
         <div className="grid  w-full flex-1 grid-cols-2 gap-4 bg-white p-5 sm:grid-cols-3  md:grid-cols-4 lg:grid-cols-5 2xl:grid-cols-6">
           {centerData?.map((item) => (
             <div className="h-auto" key={item.id}>
-              <div className="group relative mt-2 h-fit w-full auto-cols-min auto-rows-max overflow-hidden rounded-lg lg:min-w-40 2xl:min-w-[18rem]">
+              <div className="group relative mt-2 h-fit w-full auto-cols-min auto-rows-max overflow-hidden rounded-lg lg:min-w-40">
                 <ImageSlider
                   params={searchParams.get("status")}
                   imageData={item.images}
