@@ -75,7 +75,7 @@ const AdminDashboard = () => {
 
   return (
     <div className="flex flex-1 flex-col">
-      <div className="flex h-auto w-full items-center justify-between px-5">
+      <div className="flex h-auto w-full items-center justify-between px-5 sm:flex-row flex-col gap-3">
         <div className="flex">
           {nav.map((items) => (
             <Link
