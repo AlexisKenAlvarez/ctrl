@@ -178,7 +178,10 @@ const Signin = () => {
           variant={"ghost"}
           className="w-full rounded-lg border-black"
           disabled={debounce}
-          onClick={() => router.push("/")}
+          onClick={(e) => {
+            e.preventDefault();
+            router.push("/");
+          }}
         >
           Continue as Guest
         </Button>
