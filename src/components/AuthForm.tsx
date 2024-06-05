@@ -69,7 +69,9 @@ const Signin = () => {
 
   const formSchema = z.object({
     email: z.string().email(),
-    password: z.string().min(6),
+    password: z
+      .string()
+      .min(6, { message: "Password must be at least 6 characters." }),
   });
 
   type formType = z.infer<typeof formSchema>;
@@ -193,10 +195,15 @@ const Signup = () => {
 
   const formSchema = z
     .object({
-      name: z.string().min(3).max(35),
+      name: z
+        .string()
+        .min(3, { message: "Name must be at least 3 characters" })
+        .max(35, { message: "Name must not exceed 35 characters." }),
       email: z.string().email(),
-      password: z.string().min(6),
-      confirmPassword: z.string().min(6),
+      password: z
+        .string()
+        .min(6, { message: "Password must be at least 6 characters." }),
+      confirmPassword: z.string(),
     })
     .refine((data) => data.password === data.confirmPassword, {
       message: "Passwords don't match",
