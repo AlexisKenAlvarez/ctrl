@@ -16,7 +16,7 @@ const SelectRole = ({ userId }: { userId: string }) => {
   const router = useRouter();
 
   return (
-    <div className="p-5">
+    <div className="p-5 pt-10">
       <div className="mx-auto max-w-screen-2xl text-center">
         <h1 className="text-2xl font-bold">Select your Role</h1>
         <p className="mt-2 opacity-50">What type of user are you?</p>

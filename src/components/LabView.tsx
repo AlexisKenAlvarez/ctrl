@@ -157,15 +157,15 @@ const LabView = ({
                     className="w-[35rem] cursor-pointer object-cover"
                   />
                 </DialogTrigger>
-                <DialogContent>
-                  <Image
-                    alt={image.name}
-                    width={1000}
-                    height={1000}
-                    src={image.url}
-                    className="w-full object-cover"
-                  />
-                </DialogContent>
+                <DialogContent className="!max-w-3xl w-full">
+                    <Image
+                      alt={image.name}
+                      width={1500}
+                      height={1500}
+                      src={image.url}
+                      className="h-full w-full object-cover"
+                    />
+                  </DialogContent>
               </Dialog>
             );
           }
@@ -185,11 +185,11 @@ const LabView = ({
                       className="h-full w-full cursor-pointer object-cover"
                     />
                   </DialogTrigger>
-                  <DialogContent>
+                  <DialogContent className="!max-w-3xl w-full">
                     <Image
                       alt={image.name}
-                      width={1000}
-                      height={1000}
+                      width={1500}
+                      height={1500}
                       src={image.url}
                       className="h-full w-full object-cover"
                     />

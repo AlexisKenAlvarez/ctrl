@@ -19,7 +19,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { supabase } from "supabase/supabaseClient";
 import { z } from "zod";
-
+import Link from "next/link";
 const AuthForm = () => {
   return (
     <div className="flex w-full flex-1 items-center p-10 ">
@@ -119,7 +119,7 @@ const Signin = () => {
             await supabase.auth.updateUser({
               data: {
                 name: userData.full_name,
-                type: userData.user_role,
+                role: userData.user_role,
               },
             });
 
@@ -175,7 +175,7 @@ const Signin = () => {
         </Button>
 
         <Button
-          variant={"ghost"}
+          variant={"secondary"}
           className="w-full rounded-lg border-black"
           disabled={debounce}
           onClick={(e) => {
@@ -185,6 +185,12 @@ const Signin = () => {
         >
           Continue as Guest
         </Button>
+        <Link
+          className="pt-2"
+          href={"/auth/forgot"}
+        >
+          <Button variant={"link"} className="mt-2">Forgot password?</Button>
+        </Link>
       </form>
     </Form>
   );

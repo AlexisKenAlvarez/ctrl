@@ -17,6 +17,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { LocationInterface } from "@/lib/locationTypes";
 import { cn } from "@/lib/utils";
+import type { RouterOutputs } from "@/trpc/react";
+import type { Session } from "@supabase/supabase-js";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { barangays } from "psgc";
@@ -25,7 +27,6 @@ import { cities } from "select-philippines-address";
 import { supabase } from "supabase/supabaseClient";
 import { Input } from "./ui/input";
 import { Separator } from "./ui/separator";
-import type { RouterOutputs } from "@/trpc/react";
 
 interface LocationData {
   name: string;
@@ -38,7 +39,7 @@ const Nav = ({
   isLoggedIn: boolean;
   role: NonNullable<RouterOutputs["auth"]["getUserFromSession"]>["user_role"];
 }) => {
-  console.log("🚀 ~ role:", role);
+
   const [selected, setSelected] = useState<number | null>(null);
   const [citiesData, setCities] = useState<LocationInterface["cities"]>([]);
   const [result, setResult] = useState<LocationData[]>([]);
@@ -47,14 +48,13 @@ const Nav = ({
 
   const [focused, setFocused] = useState(false);
   const router = useRouter();
-  const pathname = usePathname().split("/");
+  const pathname = usePathname()
 
-  const path = pathname[1];
+  const path = pathname.split("/")[1];
 
   useEffect(() => {
     void (async () => {
       const citiesData = await cities("0421");
-      console.log("🚀 ~ void ~ citiesData:", citiesData);
       setCities(citiesData as LocationInterface["cities"]);
     })();
 
@@ -231,9 +231,7 @@ const Nav = ({
 
                   <DropdownMenuItem
                     onClick={async () => {
-                      console.log("SIGNOUT");
                       await supabase.auth.signOut();
-                      console.log("SIGNOUT2");
                       router.refresh();
                     }}
                     className="p-3"

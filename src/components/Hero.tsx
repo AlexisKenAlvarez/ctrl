@@ -176,7 +176,7 @@ const Hero = () => {
               key={item.id}
               onClick={() => router.push(`/labs/${item.id}`)}
             >
-              <div className="group relative h-fit auto-cols-min auto-rows-max overflow-hidden rounded-lg lg:min-w-40">
+              <div className="group relative h-fit auto-cols-min auto-rows-max overflow-hidden rounded-lg lg:min-w-40 max-w-60 w-full">
                 <ImageSlider imageData={item.images} />
               </div>
               <div className="mt-3">

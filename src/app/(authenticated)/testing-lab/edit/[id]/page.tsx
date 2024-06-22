@@ -1,6 +1,7 @@
 import EditCenter from "@/components/EditCenter";
 import { api } from "@/trpc/server";
 import { redirect } from "next/navigation";
+import { createClient } from "supabase/supabaseServer";
 
 export const dynamic = 'force-dynamic'
 
@@ -11,13 +12,15 @@ const page = async ({
     id: string;
   };
 }) => {
+  const supabase = createClient()
+  const {data: {user}} = await supabase.auth.getUser()
   const labId = params.id;
-  const user = await api.auth.getUserFromSession()
+
   const centerData = await api.user.getSingleCenter({
     id: labId,
   });
 
-  if (user?.user_role === 'admin') {
+  if (user?.user_metadata.role === 'admin') {
     return <EditCenter centerData={centerData} labId={labId} />;
   }
 

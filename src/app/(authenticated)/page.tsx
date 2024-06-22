@@ -1,8 +1,9 @@
 import Hero from "@/components/Hero";
 
-const page = () => {
+const page = async () => {
+
   return (
-    <div className="md:px-16 px-0 flex flex-col flex-1">
+    <div className="flex flex-1 flex-col px-0 md:px-16">
       <Hero />
     </div>
   );

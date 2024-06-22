@@ -52,12 +52,12 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Checkbox } from "@/components/ui/checkbox";
-import { api } from "@/trpc/react";
-import SelectTime from "./SelectTime";
-import { useRouter } from "next/navigation";
-import useGetSession from "@/utils/useGetSession";
-import { isValidMapLink } from "@/utils/utils";
 import type { LocationInterface } from "@/lib/locationTypes";
+import { api } from "@/trpc/react";
+import { isValidMapLink } from "@/utils/utils";
+import type { User } from "@supabase/supabase-js";
+import { useRouter } from "next/navigation";
+import SelectTime from "./SelectTime";
 
 interface DaysType {
   label: string;
@@ -71,8 +71,7 @@ interface ImagesType {
   name: string;
 }
 
-const NewTestingCenter = () => {
-  const { session: user } = useGetSession();
+const NewTestingCenter = ({ user }: { user: User | null }) => {
 
   const uploadTestingCenterMutation = api.user.addTestingCenter.useMutation();
   const [locationData, setLocationData] = useState<LocationInterface>({
@@ -261,15 +260,18 @@ const NewTestingCenter = () => {
             onClick={form.handleSubmit(async (data) => {
               if (!debounce) {
                 setDebounce(true);
+                const condition1 = data.google_map?.trim() === "" || data.google_map === null
 
                 if (
-                  data.google_map !== "" &&
-                  !isValidMapLink(data.google_map ?? '')
+                  (!condition1) &&
+                  !isValidMapLink(data.google_map ?? "")
                 ) {
+                  console.log("🚀 ~ onClick={form.handleSubmit ~ condition1:", condition1)
+
                   form.setError("google_map", {
                     message: "Invalid Google Map link",
                   });
-                  setDebounce(false)
+                  setDebounce(false);
                   return;
                 }
 
@@ -278,7 +280,7 @@ const NewTestingCenter = () => {
                     await uploadTestingCenterMutation.mutateAsync({
                       ...data,
                       open_hours: daysValue,
-                      ownerId: user?.user.id ?? "",
+                      ownerId: user?.id ?? "",
                     });
 
                   const postId = uploadData.id;
@@ -898,7 +900,7 @@ const NewTestingCenter = () => {
                           />
                         </FormControl>
                         <FormDescription>
-                         Share &gt; Embed a map &gt; COPY HTML
+                          Share &gt; Embed a map &gt; COPY HTML
                         </FormDescription>
                         <FormMessage />
                       </FormItem>

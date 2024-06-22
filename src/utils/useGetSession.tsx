@@ -1,12 +1,16 @@
 "use client";
 
 import type { Session } from "@supabase/supabase-js";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "supabase/supabaseClient";
-import { useEffect, useState } from "react";
 
 const useGetSession = () => {
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState<Session | null>(null);
+
+  const removeSession = useCallback(() => {
+    setSession(null);
+  }, [])
 
   useEffect(() => {
     try {
@@ -25,6 +29,7 @@ const useGetSession = () => {
   return {
     session,
     loading,
+    removeSession
   };
 };
 

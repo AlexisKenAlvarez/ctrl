@@ -82,10 +82,20 @@ const TestingCenter = ({
         <Separator />
       </div>
 
-      <div className="grid  w-fit grid-cols-2 gap-4 bg-white p-5 sm:grid-cols-3  md:grid-cols-4 lg:grid-cols-5 2xl:grid-cols-6">
+  
+        {centersData.length === 0 && (
+          <div className="grid flex-1 w-full place-content-center text-center">
+            <h1 className="mx-auto text-center font-medium">
+              No testing centers found
+            </h1>
+          </div>
+        )}
+
+
+      <div className="grid w-full grid-cols-2 gap-4 bg-white p-5 sm:grid-cols-3  md:grid-cols-4 lg:grid-cols-5 2xl:grid-cols-6">
         {centerData.map((item) => (
           <div className="h-auto" key={item.id}>
-            <div className="group relative h-fit w-full auto-cols-min auto-rows-max overflow-hidden rounded-lg  lg:min-w-40">
+            <div className="group relative h-fit auto-cols-min auto-rows-max overflow-hidden rounded-lg lg:min-w-40 max-w-60 w-full">
               <ImageSlider
                 imageData={item.images}
                 labId={item.id}
@@ -146,7 +156,8 @@ const ImageSlider = ({
 
   const [menuOpen, setMenuOpen] = useState(false);
   const deleteCenterMutation = api.user.deleteCenter.useMutation();
-  const changeCenterDeactivated = api.user.changeCenterDeactivated.useMutation();
+  const changeCenterDeactivated =
+    api.user.changeCenterDeactivated.useMutation();
   const [imageLoading, setImageLoading] = useState(true);
   const [cApi, setApi] = useState<CarouselApi>();
   const [current, setCurrent] = useState(0);
