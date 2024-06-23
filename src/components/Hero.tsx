@@ -46,7 +46,7 @@ const Hero = () => {
     useRef<HTMLDivElement>() as React.MutableRefObject<HTMLInputElement>;
   const { events } = useDraggable(ref);
   const { data: centerData, isPending: dataPending } =
-    api.user.getHeroCenters.useQuery({
+    api.lab.getHeroCenters.useQuery({
       search: searchParams.get("search") ?? null,
       status: "accepted",
       filter: (searchParams.get("filter") as filterType["type"]) ?? null,
@@ -176,7 +176,7 @@ const Hero = () => {
               key={item.id}
               onClick={() => router.push(`/labs/${item.id}`)}
             >
-              <div className="group relative h-fit auto-cols-min auto-rows-max overflow-hidden rounded-lg lg:min-w-40 max-w-60 w-full">
+              <div className="group relative h-fit auto-cols-min auto-rows-max overflow-hidden rounded-lg lg:min-w-40 w-full">
                 <ImageSlider imageData={item.images} />
               </div>
               <div className="mt-3">

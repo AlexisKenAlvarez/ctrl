@@ -47,10 +47,10 @@ const TestingCenter = ({
   centersData,
   owner,
 }: {
-  centersData: RouterOutputs["user"]["getCenters"];
+  centersData: RouterOutputs["lab"]["getCenters"];
   owner: string;
 }) => {
-  const { data: centerData } = api.user.getCenters.useQuery(
+  const { data: centerData } = api.lab.getCenters.useQuery(
     {
       owner,
       status: "all",
@@ -95,7 +95,7 @@ const TestingCenter = ({
       <div className="grid w-full grid-cols-2 gap-4 bg-white p-5 sm:grid-cols-3  md:grid-cols-4 lg:grid-cols-5 2xl:grid-cols-6">
         {centerData.map((item) => (
           <div className="h-auto" key={item.id}>
-            <div className="group relative h-fit auto-cols-min auto-rows-max overflow-hidden rounded-lg lg:min-w-40 max-w-60 w-full">
+            <div className="group relative h-fit auto-cols-min auto-rows-max overflow-hidden rounded-lg lg:min-w-40 w-full">
               <ImageSlider
                 imageData={item.images}
                 labId={item.id}
@@ -155,9 +155,9 @@ const ImageSlider = ({
   const utils = api.useUtils();
 
   const [menuOpen, setMenuOpen] = useState(false);
-  const deleteCenterMutation = api.user.deleteCenter.useMutation();
+  const deleteCenterMutation = api.lab.deleteCenter.useMutation();
   const changeCenterDeactivated =
-    api.user.changeCenterDeactivated.useMutation();
+    api.lab.changeCenterDeactivated.useMutation();
   const [imageLoading, setImageLoading] = useState(true);
   const [cApi, setApi] = useState<CarouselApi>();
   const [current, setCurrent] = useState(0);
@@ -283,7 +283,7 @@ const ImageSlider = ({
                     });
 
                     setToDeactivate(null);
-                    await utils.user.getCenters.invalidate();
+                    await utils.lab.getCenters.invalidate();
                   }}
                 >
                   Confirm
@@ -315,7 +315,7 @@ const ImageSlider = ({
                     });
 
                     setToDelete(null);
-                    await utils.user.getCenters.invalidate();
+                    await utils.lab.getCenters.invalidate();
                   }}
                 >
                   Confirm

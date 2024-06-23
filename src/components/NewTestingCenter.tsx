@@ -73,7 +73,7 @@ interface ImagesType {
 
 const NewTestingCenter = ({ user }: { user: User | null }) => {
 
-  const uploadTestingCenterMutation = api.user.addTestingCenter.useMutation();
+  const uploadTestingCenterMutation = api.lab.addTestingCenter.useMutation();
   const [locationData, setLocationData] = useState<LocationInterface>({
     regions: [],
     provinces: [],

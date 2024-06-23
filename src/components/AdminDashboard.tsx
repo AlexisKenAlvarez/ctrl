@@ -53,7 +53,7 @@ const nav = [
 
 const AdminDashboard = () => {
   const searchParams = useSearchParams();
-  const { data: centerData, isPending } = api.user.getCenters.useQuery({
+  const { data: centerData, isPending } = api.lab.getCenters.useQuery({
     status:
       (searchParams.get("status") as
         | "pending"
@@ -75,37 +75,23 @@ const AdminDashboard = () => {
 
   return (
     <div className="flex flex-1 flex-col">
-      <div className="flex h-auto w-full items-center justify-between px-5 sm:flex-row flex-col gap-3">
+      <div className="flex h-auto w-full flex-col items-center justify-between gap-3 px-5 sm:flex-row pt-5">
         <div className="flex">
           {nav.map((items) => (
-            <Link
-              href={`/admin?${createQueryString("status", items.label)}`}
+            <Button
               key={items.label}
-              className={cn(
-                "group relative w-fit p-4 transition-all  duration-300 ease-in-out",
-                {
-                  "bg-orange-500/10": items.label === "pending",
-                  "bg-green-500/10": items.label === "accepted",
-                  "bg-red-500/10": items.label === "rejected",
-                },
-              )}
+              asChild
+              variant={"ghost"}
+              className={cn("hover:bg-transparent opacity-80 hover:opacity-100 capitalize rounded-full font-normal transition-all ease-in-out duration-100", {
+                "bg-slate-100 hover:bg-slate-100 opacity-100":
+                  searchParams.get("status") === items.label ||
+                  (!searchParams.get("status") && items.label === "pending"),
+              })}
             >
-              <h1 className="capitalize">{items.label}</h1>
-              <div
-                className={cn(
-                  "absolute bottom-0 left-0 right-0 mx-auto h-1 w-0 transition-all duration-300 ease-in-out group-hover:w-full",
-                  {
-                    "bg-orange-500": items.label === "pending",
-                    "bg-green-500": items.label === "accepted",
-                    "bg-red-500": items.label === "rejected",
-                    "w-full":
-                      searchParams.get("status") === items.label ||
-                      (!searchParams.get("status") &&
-                        items.label === "pending"),
-                  },
-                )}
-              ></div>
-            </Link>
+              <Link href={`/admin?${createQueryString("status", items.label)}`}>
+                <h1 className="">{items.label}</h1>
+              </Link>
+            </Button>
           ))}
         </div>
         <Link href={"/admin/accounts"}>
@@ -206,14 +192,14 @@ const ImageSlider = ({
   const utils = api.useUtils();
 
   const [menuOpen, setMenuOpen] = useState(false);
-  const deleteCenterMutation = api.user.deleteCenter.useMutation();
+  const deleteCenterMutation = api.lab.deleteCenter.useMutation();
   const changeDeactivatedMutation =
-    api.user.changeCenterDeactivated.useMutation();
+    api.lab.changeCenterDeactivated.useMutation();
   const [imageLoading, setImageLoading] = useState(true);
   const [cApi, setApi] = useState<CarouselApi>();
   const [current, setCurrent] = useState(0);
 
-  const changeStatusMutation = api.user.changeCenterStatus.useMutation();
+  const changeStatusMutation = api.lab.changeCenterStatus.useMutation();
 
   useEffect(() => {
     if (!cApi) {
@@ -302,7 +288,7 @@ const ImageSlider = ({
                               | "accepted"
                               | "rejected",
                           });
-                          await utils.user.getCenters.invalidate();
+                          await utils.lab.getCenters.invalidate();
                           toast.error("Successfuly updated center status.");
                         } catch (error) {
                           console.log(error);
@@ -372,7 +358,7 @@ const ImageSlider = ({
                     });
 
                     setToDeactivate(null);
-                    await utils.user.getCenters.invalidate();
+                    await utils.lab.getCenters.invalidate();
                   }}
                 >
                   Confirm
@@ -404,7 +390,7 @@ const ImageSlider = ({
                     });
 
                     setToDelete(null);
-                    await utils.user.getCenters.invalidate();
+                    await utils.lab.getCenters.invalidate();
                   }}
                 >
                   Confirm

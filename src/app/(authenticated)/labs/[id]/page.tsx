@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 const page = async ({ params }: { params: { id: string } }) => {
   const labId = params.id;
 
-  const labData = await api.user.getSingleCenter({
+  const labData = await api.lab.getSingleCenter({
     id: labId,
   });
 
@@ -13,7 +13,7 @@ const page = async ({ params }: { params: { id: string } }) => {
     redirect("/");
   }
 
-  const reviews = await api.user.getReviews({
+  const reviews = await api.lab.getReviews({
     labId: parseInt(labId),
   });
 

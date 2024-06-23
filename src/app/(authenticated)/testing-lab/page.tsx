@@ -4,7 +4,7 @@ import { api } from "@/trpc/server";
 const page = async () => {
   const user = await api.auth.getSession();
 
-  const centersData = await api.user.getCenters({
+  const centersData = await api.lab.getCenters({
     owner: user.user!.id ?? "",
     status: "all",
   });

@@ -23,8 +23,6 @@ const page = async ({
     console.log(error);
   }
 
-  console.log("🚀 ~ session:", session);
-
   if (session) {
     await supabase.auth.refreshSession({
       refresh_token: session.refresh_token,

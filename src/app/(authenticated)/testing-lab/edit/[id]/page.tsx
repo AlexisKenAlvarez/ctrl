@@ -16,19 +16,19 @@ const page = async ({
   const {data: {user}} = await supabase.auth.getUser()
   const labId = params.id;
 
-  const centerData = await api.user.getSingleCenter({
+  const centerData = await api.lab.getSingleCenter({
     id: labId,
   });
 
   if (user?.user_metadata.role === 'admin') {
-    return <EditCenter centerData={centerData} labId={labId} />;
+    return <EditCenter centerData={centerData} labId={labId} user={user} />;
   }
 
   if (centerData.owner !== user?.id) {
     redirect("/")
   }
 
-  return <EditCenter centerData={centerData} labId={labId} />;
+  return <EditCenter centerData={centerData} labId={labId} user={user} />;
 };
 
 export default page;

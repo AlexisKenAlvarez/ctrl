@@ -232,7 +232,7 @@ const Nav = ({
                   <DropdownMenuItem
                     onClick={async () => {
                       await supabase.auth.signOut();
-                      router.refresh();
+                      window.location.reload()
                     }}
                     className="p-3"
                   >

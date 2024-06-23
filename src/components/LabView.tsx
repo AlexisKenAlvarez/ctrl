@@ -1,7 +1,14 @@
 "use client";
 import { cn, isLabOpen, timeAgo, toMilitaryTime } from "@/lib/utils";
 import { api, type RouterOutputs } from "@/trpc/react";
-import { ChevronDown, Clock, DoorClosed, Mail, Phone } from "lucide-react";
+import {
+  ChevronDown,
+  Clock,
+  DoorClosed,
+  Mail,
+  Phone,
+  Trash2,
+} from "lucide-react";
 import Image from "next/image";
 
 import { Facebook, Star } from "lucide-react";
@@ -12,8 +19,10 @@ import { Separator } from "./ui/separator";
 
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -66,15 +75,15 @@ const LabView = ({
   labId,
   reviewsData,
 }: {
-  labData: RouterOutputs["user"]["getSingleCenter"];
+  labData: RouterOutputs["lab"]["getSingleCenter"];
   labId: string;
-  reviewsData: RouterOutputs["user"]["getReviews"];
+  reviewsData: RouterOutputs["lab"]["getReviews"];
 }) => {
   const [starHover, setStarHover] = useState<number | null>(null);
   const router = useRouter();
   const { session } = useGetSession();
   const [rate, setRate] = useState(0);
-  const { data: lab } = api.user.getSingleCenter.useQuery(
+  const { data: lab } = api.lab.getSingleCenter.useQuery(
     {
       id: labId,
     },
@@ -83,7 +92,7 @@ const LabView = ({
     },
   );
 
-  const { data: reviews } = api.user.getReviews.useQuery(
+  const { data: reviews } = api.lab.getReviews.useQuery(
     {
       labId: parseInt(labId),
     },
@@ -92,7 +101,7 @@ const LabView = ({
     },
   );
 
-  const addReviewMutation = api.user.addReview.useMutation({
+  const addReviewMutation = api.lab.addReview.useMutation({
     onError(error) {
       if (error.data?.code === "CONFLICT") {
         toast.error("You can only review once per lab.");
@@ -157,15 +166,15 @@ const LabView = ({
                     className="w-[35rem] cursor-pointer object-cover"
                   />
                 </DialogTrigger>
-                <DialogContent className="!max-w-3xl w-full">
-                    <Image
-                      alt={image.name}
-                      width={1500}
-                      height={1500}
-                      src={image.url}
-                      className="h-full w-full object-cover"
-                    />
-                  </DialogContent>
+                <DialogContent className="w-full !max-w-3xl">
+                  <Image
+                    alt={image.name}
+                    width={1500}
+                    height={1500}
+                    src={image.url}
+                    className="h-full w-full object-cover"
+                  />
+                </DialogContent>
               </Dialog>
             );
           }
@@ -185,7 +194,7 @@ const LabView = ({
                       className="h-full w-full cursor-pointer object-cover"
                     />
                   </DialogTrigger>
-                  <DialogContent className="!max-w-3xl w-full">
+                  <DialogContent className="w-full !max-w-3xl">
                     <Image
                       alt={image.name}
                       width={1500}
@@ -453,7 +462,7 @@ const LabView = ({
                           rating: rate,
                         });
 
-                        await utils.user.getSingleCenter.invalidate();
+                        await utils.lab.getSingleCenter.invalidate();
                         toast.success("Review added successfully");
                         form.reset();
                         setRate(0);
@@ -648,9 +657,34 @@ const AllReviews = ({
   average: number;
   total: number;
 }) => {
-  const { data: reviews } = api.user.getAllReviews.useQuery({
+  const { data: reviews } = api.lab.getAllReviews.useQuery({
     labId: parseInt(labId),
   });
+  const { session } = useGetSession();
+  const utils = api.useUtils();
+
+  const deleteReviewMutation = api.lab.deleteReviews.useMutation();
+
+  const handleReview = (id: number) => {
+    const promise = new Promise((resolve, reject) => {
+      deleteReviewMutation
+        .mutateAsync({
+          id,
+        })
+        .then(async () => {
+          await utils.lab.getReviews.invalidate();
+          await utils.lab.getAllReviews.invalidate();
+          return resolve("Review deleted successfully");
+        })
+        .catch(() => reject);
+    });
+
+    toast.promise(promise, {
+      loading: "Deleting review...",
+      success: "Review deleted successfully",
+      error: "An error occurred. Please try again.",
+    });
+  };
 
   return (
     <Dialog>
@@ -717,19 +751,78 @@ const AllReviews = ({
                       />
                     )}
                   </div>
+                  <div className="w-full space-y-1">
+                    <div className="flex justify-between">
+                      <div className="flex items-center gap-0">
+                        {Array.from({ length: 5 }).map((_, index) => (
+                          <Star
+                            key={index}
+                            size={16}
+                            strokeWidth={1}
+                            color="#fcd34d"
+                            fill={index < review.rating ? "#fcd34d" : "none"}
+                          />
+                        ))}
+                      </div>
+                      {session?.user.user_metadata.role === "admin" && (
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button
+                              variant={"outline"}
+                              size={"icon"}
+                              className="mr-2"
+                            >
+                              <Trash2
+                                size={16}
+                                color="red"
+                                className="opacity-40 hover:opacity-100"
+                              />
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>
+                                Are you absolutely sure?
+                              </DialogTitle>
+                              <DialogDescription>
+                                This action cannot be undone. This will
+                                permanently delete this comment from this lab.
+                              </DialogDescription>
+                            </DialogHeader>
 
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-0">
-                      {Array.from({ length: 5 }).map((_, index) => (
-                        <Star
-                          key={index}
-                          size={16}
-                          strokeWidth={1}
-                          color="#fcd34d"
-                          fill={index < review.rating ? "#fcd34d" : "none"}
-                        />
-                      ))}
+                            <div className="rounded-md border p-2">
+                              <h1 className="text-left text-sm">
+                                {review.author_data?.full_name}
+                              </h1>
+                              <p className="text-left text-xs opacity-70">
+                                {timeAgo(review.created_at)}
+                              </p>
+
+                              <div className="">
+                                <pre className="text-wrap text-left font-sans text-sm">
+                                  {review.text}
+                                </pre>
+                              </div>
+                            </div>
+
+                            <DialogFooter>
+                              <Button
+                                className="mr-2 bg-blue hover:bg-blue/80"
+                                asChild
+                              >
+                                <DialogClose
+                                  onClick={() => handleReview(review.id)}
+                                >
+                                  Confirm
+                                </DialogClose>
+                              </Button>
+                              <DialogClose>Cancel</DialogClose>
+                            </DialogFooter>
+                          </DialogContent>
+                        </Dialog>
+                      )}
                     </div>
+
                     <h1 className="text-left text-sm">
                       {review.author_data?.full_name}
                     </h1>
@@ -757,11 +850,11 @@ const OpenHoursDialog = ({
   hoursData,
   dayName,
 }: {
-  hoursData: RouterOutputs["user"]["getSingleCenter"]["open_hour"];
+  hoursData: RouterOutputs["lab"]["getSingleCenter"]["open_hour"];
   dayName: string;
 }) => {
   const [sortedDay, setSortedDay] =
-    useState<RouterOutputs["user"]["getSingleCenter"]["open_hour"]>();
+    useState<RouterOutputs["lab"]["getSingleCenter"]["open_hour"]>();
   const daysOfWeek: string[] = [
     "monday",
     "tuesday",

@@ -82,6 +82,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import type { RouterOutputs } from "@/trpc/react";
 import { api } from "@/trpc/react";
+import { User } from "@supabase/supabase-js";
 import { toast } from "sonner";
 import SelectTime from "./SelectTime";
 
@@ -100,9 +101,11 @@ interface ImagesType {
 const EditCenter = ({
   centerData,
   labId,
+  user
 }: {
-  centerData: RouterOutputs["user"]["getSingleCenter"];
+  centerData: RouterOutputs["lab"]["getSingleCenter"];
   labId: string;
+  user: User | null
 }) => {
   const router = useRouter();
   const [daysValue, setDaysValue] = useState<DaysType[]>([
@@ -196,7 +199,7 @@ const EditCenter = ({
   ]);
 
   const { data: center, isFetched: centerFetched } =
-    api.user.getSingleCenter.useQuery(
+    api.lab.getSingleCenter.useQuery(
       {
         id: labId,
       },
@@ -205,7 +208,7 @@ const EditCenter = ({
       },
     );
 
-  const editCenterMutation = api.user.updateCenter.useMutation();
+  const editCenterMutation = api.lab.updateCenter.useMutation();
   const utils = api.useUtils();
   const [locationData, setLocationData] = useState<LocationInterface>({
     regions: [],
@@ -404,7 +407,7 @@ const EditCenter = ({
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>
-                <BreadcrumbLink href="/testing-lab">Dashboard</BreadcrumbLink>
+                <BreadcrumbLink href={user?.user_metadata.role === "admin" ? "/admin" : "/testing-lab"}>Dashboard</BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator />
               <BreadcrumbItem>
@@ -476,7 +479,7 @@ const EditCenter = ({
                   console.log("Edit success");
                   toast.success("Edit success");
                   router.refresh()
-                  await utils.user.getCenters.invalidate();
+                  await utils.lab.getCenters.invalidate();
                 } catch (error) {
                   console.log(error);
                 }
