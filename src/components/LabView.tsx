@@ -462,7 +462,7 @@ const LabView = ({
                           rating: rate,
                         });
 
-                        await utils.lab.getSingleCenter.invalidate();
+                        await utils.lab.getReviews.invalidate();
                         toast.success("Review added successfully");
                         form.reset();
                         setRate(0);
