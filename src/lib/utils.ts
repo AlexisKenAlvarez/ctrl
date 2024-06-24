@@ -23,14 +23,14 @@ export function toMilitaryTime(time: string) {
   }
 }
 
-export function isLabOpen(openTime: number, closeTime: number) {
-  const now = new Date();
-  const currentTime = now.getHours();
+// export function isLabOpen(openTime: number, closeTime: number) {
+//   const now = new Date();
+//   const currentTime = now.getHours();
 
-  if (currentTime >= openTime && currentTime < closeTime) {
-    return true
-  }
-}
+//   if (currentTime >= openTime && currentTime < closeTime) {
+//     return true
+//   }
+// }
 
 export const timeAgo = (created: string) => {
   const now = new Date();

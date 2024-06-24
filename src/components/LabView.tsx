@@ -1,5 +1,5 @@
 "use client";
-import { cn, isLabOpen, timeAgo, toMilitaryTime } from "@/lib/utils";
+import { cn, timeAgo } from "@/lib/utils";
 import { api, type RouterOutputs } from "@/trpc/react";
 import {
   ChevronDown,
@@ -41,7 +41,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
 import useGetSession from "@/utils/useGetSession";
-import { extractSrcUrl } from "@/utils/utils";
+import { extractSrcUrl, isLabOpen, to12Hours } from "@/utils/utils";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import ImageSlider from "./ImageSlider";
@@ -163,7 +163,9 @@ const LabView = ({
                     width={1000}
                     height={1000}
                     src={image.url}
-                    className="w-[35rem] cursor-pointer object-cover"
+                    className={cn("w-[35rem] cursor-pointer object-cover", {
+                      "w-full": lab.images.length === 1,
+                    })}
                   />
                 </DialogTrigger>
                 <DialogContent className="w-full !max-w-3xl">
@@ -180,7 +182,11 @@ const LabView = ({
           }
         })}
 
-        <div className="grid h-full w-full grid-cols-2 grid-rows-2 gap-2">
+        <div className={cn("grid h-full w-full grid-cols-2 grid-rows-2 gap-2", {
+          "grid-rows-1": lab.images.length <= 3,
+          "grid-cols-1": lab.images.length === 2,
+          "hidden": lab.images.length === 1,
+        })}>
           {lab.images.map((image) => {
             if (!image.thumbnail) {
               return (
@@ -194,13 +200,13 @@ const LabView = ({
                       className="h-full w-full cursor-pointer object-cover"
                     />
                   </DialogTrigger>
-                  <DialogContent className="w-full !max-w-3xl">
+                  <DialogContent className="w-auto max-h-screen overflow-hidden">
                     <Image
                       alt={image.name}
                       width={1500}
-                      height={1500}
+                      height={1000}
                       src={image.url}
-                      className="h-full w-full object-cover"
+                      className="object-cover h-full w-auto max-h-[90vh]"
                     />
                   </DialogContent>
                 </Dialog>
@@ -255,10 +261,7 @@ const LabView = ({
                   );
                 }
 
-                const openTIme = toMilitaryTime(data.open_time);
-                const closeTime = toMilitaryTime(data.close_time!);
-
-                if (isLabOpen(openTIme, closeTime)) {
+                if (isLabOpen(data.open_time, data.close_time ?? "")) {
                   return (
                     <div key={data.day} className="flex items-center gap-2">
                       <p className="flex items-center gap-2 text-green-500">
@@ -268,7 +271,7 @@ const LabView = ({
                       <Dialog>
                         <DialogTrigger className="flex items-center gap-2">
                           <>
-                            <p className="">Closes {data.close_time}</p>
+                            <p className="">Closes {to12Hours(data.close_time ?? "")}</p>
                             <ChevronDown size={16} />
                           </>
                         </DialogTrigger>
@@ -292,7 +295,7 @@ const LabView = ({
                       <Dialog>
                         <DialogTrigger className="flex items-center gap-2">
                           <>
-                            <p className="">Opens {data.open_time}</p>
+                            <p className="">Opens {to12Hours(data.open_time)}</p>
                             <ChevronDown size={16} />
                           </>
                         </DialogTrigger>
@@ -890,9 +893,9 @@ const OpenHoursDialog = ({
             <h1 className="capitalize">{data.day}</h1>
 
             <div className="flex w-44 items-center gap-1 text-left">
-              <p>{data.open_time ?? "Closed"}</p>
+              <p>{data.open_time ? to12Hours(data.open_time) : "Closed"}</p>
               <p>-</p>
-              <p>{data.close_time ?? "Closed"}</p>
+              <p>{data.close_time ? to12Hours(data.close_time) : "Closed"}</p>
             </div>
           </li>
         ))}

@@ -85,6 +85,7 @@ import { api } from "@/trpc/react";
 import { User } from "@supabase/supabase-js";
 import { toast } from "sonner";
 import SelectTime from "./SelectTime";
+import PickTime from "./PickTime";
 
 interface DaysType {
   label: string;
@@ -224,13 +225,16 @@ const EditCenter = ({
   const [thumbnail, setThumbnail] = useState("");
 
   const handleTime = useCallback(
-    ({ type, value, day }: { type: string; value: string; day: string }) => {
+    ({ start, end, day }: { start: string; day: string; end: string }) => {
+      console.log(start, end, day);
       setDaysValue((prev) =>
         prev.map((item) => {
           if (item.label === day) {
             return {
-              ...item,
-              [type]: value,
+              label: day,
+              checked: true,
+              open: start,
+              close: end,
             };
           }
           return item;
@@ -239,13 +243,14 @@ const EditCenter = ({
     },
     [],
   );
+
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   const [imageError, setImageError] = useState(false);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     setImages([]);
-    if (acceptedFiles.length === 5) {
+    if (acceptedFiles.length <= 5) {
       acceptedFiles.forEach((file) => {
         setPreviewImage(null);
         const imageUrl = URL.createObjectURL(file);
@@ -418,17 +423,21 @@ const EditCenter = ({
 
           <Button
             className={cn(
-              "w-fu pointer-events-auto rounded-full hover:bg-blue",
+              " pointer-events-auto rounded-full hover:bg-blue",
               {
                 "pointer-events-none": debounce,
               },
             )}
             disabled={!form.formState.isValid}
             onClick={form.handleSubmit(async (values) => {
+
+              console.log("New: ", daysValue);
+              console.log("OG: ", ogDaysValue);
+
               if (!debounce) {
                 setDebounce(true);
-
                 try {
+
                   await editCenterMutation.mutateAsync({
                     labId: labId,
                     oldValues: {
@@ -490,6 +499,7 @@ const EditCenter = ({
           >
             {debounce ? "Saving..." : "Save changes"}
           </Button>
+
         </div>
         <Separator />
       </div>
@@ -575,7 +585,7 @@ const EditCenter = ({
                         "text-red-500 opacity-100": imageError,
                       })}
                     >
-                      You must select 5 images
+                      You must select maximum of 5 images.
                     </p>
                     <div
                       {...getRootProps()}
@@ -598,7 +608,7 @@ const EditCenter = ({
 
                     <div className="mx-auto mt-5 w-fit">
                       <div className="flex flex-row-reverse gap-2">
-                        {files.length !== 5 &&
+                        {files.length <= 5 &&
                           center.images.map((file) => {
                             return (
                               <button
@@ -647,7 +657,7 @@ const EditCenter = ({
                             );
                           })}
 
-                        {files.length === 5 &&
+                        {files.length <= 5 &&
                           images.map((file) => {
                             if (previewImage === null) {
                               setPreviewImage(file.name);
@@ -732,8 +742,8 @@ const EditCenter = ({
                                           return {
                                             ...day,
                                             checked: true,
-                                            open: "8 AM",
-                                            close: "5 PM",
+                                            open: "8:00",
+                                            close: "17:00",
                                           };
                                         }
                                         return day;
@@ -765,22 +775,17 @@ const EditCenter = ({
                               </p>
                             </h1>
 
-                            <SelectTime
-                              day={item.label}
-                              value={item.open}
-                              type="open"
-                              disabled={!item.checked}
-                              handleTime={handleTime}
-                              oppositeValue={item.close}
-                            />
-                            <SelectTime
-                              day={item.label}
-                              value={item.close}
-                              type="close"
-                              disabled={!item.checked}
-                              handleTime={handleTime}
-                              oppositeValue={item.open}
-                            />
+                            <div className="w-full">
+                              <PickTime
+                                disabled={!item.checked}
+                                day={item.label}
+                                handleTime={handleTime}
+                                value={{
+                                  start: item.open ?? "8:00",
+                                  end: item.close ?? "17:00",
+                                }}
+                              />
+                            </div>
                           </div>
                         </div>
                       </div>

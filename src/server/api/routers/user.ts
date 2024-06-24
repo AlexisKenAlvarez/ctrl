@@ -163,4 +163,28 @@ export const userRouter = createTRPCRouter({
 
       return true;
     }),
+  updateName: protectedProcedure
+    .input(
+      z.object({
+        full_name: z.string(),
+        id: z.string(),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      const { error } = await ctx.supabase
+        .from("users")
+        .update({
+          full_name: input.full_name,
+        })
+        .eq("id", input.id);
+
+      if (error) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: error.message,
+        });
+      }
+
+      return true;
+    }),
 });

@@ -38,6 +38,12 @@ import {
 } from "@/components/ui/carousel";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const nav = [
   {
@@ -75,18 +81,21 @@ const AdminDashboard = () => {
 
   return (
     <div className="flex flex-1 flex-col">
-      <div className="flex h-auto w-full flex-col items-center justify-between gap-3 px-5 sm:flex-row pt-5">
+      <div className="flex h-auto w-full flex-col items-center justify-between gap-3 px-5 pt-5 sm:flex-row">
         <div className="flex">
           {nav.map((items) => (
             <Button
               key={items.label}
               asChild
               variant={"ghost"}
-              className={cn("hover:bg-transparent opacity-80 hover:opacity-100 capitalize rounded-full font-normal transition-all ease-in-out duration-100", {
-                "bg-slate-100 hover:bg-slate-100 opacity-100":
-                  searchParams.get("status") === items.label ||
-                  (!searchParams.get("status") && items.label === "pending"),
-              })}
+              className={cn(
+                "rounded-full font-normal capitalize opacity-80 transition-all duration-100 ease-in-out hover:bg-transparent hover:opacity-100",
+                {
+                  "bg-slate-100 opacity-100 hover:bg-slate-100":
+                    searchParams.get("status") === items.label ||
+                    (!searchParams.get("status") && items.label === "pending"),
+                },
+              )}
             >
               <Link href={`/admin?${createQueryString("status", items.label)}`}>
                 <h1 className="">{items.label}</h1>
@@ -139,8 +148,20 @@ const AdminDashboard = () => {
                   {item.location?.province}
                 </p>
 
-                <p className="text-xs opacity-70 sm:text-sm">
-                  Author: <b>{item.owner_data?.email}</b>
+                <p className=" text-xs opacity-70 sm:text-sm">
+                  Author:{" "}
+                  <b>
+                    <TooltipProvider delayDuration={100}>
+                      <Tooltip>
+                        <TooltipTrigger className="w-full overflow-hidden truncate text-left">
+                          {item.owner_data?.email}
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{item.owner_data?.email}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </b>
                 </p>
 
                 {item.deactivated ? (

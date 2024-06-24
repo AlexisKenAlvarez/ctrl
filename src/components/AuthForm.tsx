@@ -207,7 +207,7 @@ const Signup = () => {
       name: z
         .string()
         .min(3, { message: "Name must be at least 3 characters" })
-        .max(35, { message: "Name must not exceed 35 characters." }),
+        .max(100, { message: "Name must not exceed 100 characters." }),
       email: z.string().email(),
       password: z
         .string()

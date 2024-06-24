@@ -57,7 +57,7 @@ import { api } from "@/trpc/react";
 import { isValidMapLink } from "@/utils/utils";
 import type { User } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
-import SelectTime from "./SelectTime";
+import PickTime from "./PickTime";
 
 interface DaysType {
   label: string;
@@ -72,7 +72,6 @@ interface ImagesType {
 }
 
 const NewTestingCenter = ({ user }: { user: User | null }) => {
-
   const uploadTestingCenterMutation = api.lab.addTestingCenter.useMutation();
   const [locationData, setLocationData] = useState<LocationInterface>({
     regions: [],
@@ -131,14 +130,17 @@ const NewTestingCenter = ({ user }: { user: User | null }) => {
       close: null,
     },
   ]);
+
   const handleTime = useCallback(
-    ({ type, value, day }: { type: string; value: string; day: string }) => {
+    ({ start, end, day }: { start: string; day: string; end: string }) => {
       setDaysValue((prev) =>
         prev.map((item) => {
           if (item.label === day) {
             return {
-              ...item,
-              [type]: value,
+              label: day,
+              checked: true,
+              open: start,
+              close: end,
             };
           }
           return item;
@@ -153,7 +155,7 @@ const NewTestingCenter = ({ user }: { user: User | null }) => {
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     setImages([]);
-    if (acceptedFiles.length === 5) {
+    if (acceptedFiles.length <= 5) {
       acceptedFiles.forEach((file) => {
         const imageUrl = URL.createObjectURL(file);
 
@@ -163,7 +165,7 @@ const NewTestingCenter = ({ user }: { user: User | null }) => {
       setImageError(false);
       setFiles(acceptedFiles);
     } else {
-      console.log("You must select 5 images");
+      console.log("You must select maximum of 5 images.");
       setImageError(true);
     }
   }, []);
@@ -256,17 +258,18 @@ const NewTestingCenter = ({ user }: { user: User | null }) => {
                 "pointer-events-none": debounce,
               },
             )}
-            disabled={!form.formState.isValid || files.length !== 5}
+            disabled={!form.formState.isValid || files.length > 5}
             onClick={form.handleSubmit(async (data) => {
               if (!debounce) {
                 setDebounce(true);
-                const condition1 = data.google_map?.trim() === "" || data.google_map === null
+                const condition1 =
+                  data.google_map?.trim() === "" || data.google_map === null;
 
-                if (
-                  (!condition1) &&
-                  !isValidMapLink(data.google_map ?? "")
-                ) {
-                  console.log("🚀 ~ onClick={form.handleSubmit ~ condition1:", condition1)
+                if (!condition1 && !isValidMapLink(data.google_map ?? "")) {
+                  console.log(
+                    "🚀 ~ onClick={form.handleSubmit ~ condition1:",
+                    condition1,
+                  );
 
                   form.setError("google_map", {
                     message: "Invalid Google Map link",
@@ -292,6 +295,7 @@ const NewTestingCenter = ({ user }: { user: User | null }) => {
                   setImages([]);
                   setFiles([]);
 
+                  window.location.replace("/testing-lab");
                   router.refresh();
                 } catch (error) {
                   console.log(error);
@@ -388,14 +392,14 @@ const NewTestingCenter = ({ user }: { user: User | null }) => {
                         "text-red-500 opacity-100": imageError,
                       })}
                     >
-                      You must select 5 images
+                      Maximum of 5 images only
                     </p>
                     <div
                       {...getRootProps()}
                       className={cn(
                         "group relative mx-auto mt-3 h-36 w-full cursor-pointer bg-gray-100 p-3",
                         {
-                          "h-10 p-0": files.length >= 5,
+                          "h-10 p-0": files.length > 0,
                         },
                       )}
                     >
@@ -403,7 +407,7 @@ const NewTestingCenter = ({ user }: { user: User | null }) => {
                         className={cn(
                           "flex h-full w-full items-center justify-center border-4 border-dashed border-black/10 transition-all duration-300 ease-in-out group-hover:border-black/50",
                           {
-                            "border-0 ": files.length >= 5,
+                            "border-0 ": files.length <= 5,
                           },
                         )}
                       >
@@ -425,7 +429,7 @@ const NewTestingCenter = ({ user }: { user: User | null }) => {
                     </div>
 
                     <div className="mx-auto mt-5 w-fit">
-                      {files.length >= 5 && (
+                      {files.length <= 5 && (
                         <div className="flex flex-row-reverse gap-2">
                           {images.map((file) => {
                             if (previewImage === null) {
@@ -511,8 +515,8 @@ const NewTestingCenter = ({ user }: { user: User | null }) => {
                                           return {
                                             ...day,
                                             checked: true,
-                                            open: "8 AM",
-                                            close: "5 PM",
+                                            open: "8:00",
+                                            close: "17:00",
                                           };
                                         }
                                         return day;
@@ -543,23 +547,17 @@ const NewTestingCenter = ({ user }: { user: User | null }) => {
                                 {item.label}
                               </p>
                             </h1>
-
-                            <SelectTime
-                              day={item.label}
-                              value={item.open}
-                              type="open"
-                              disabled={!item.checked}
-                              handleTime={handleTime}
-                              oppositeValue={item.close}
-                            />
-                            <SelectTime
-                              day={item.label}
-                              value={item.close}
-                              type="close"
-                              disabled={!item.checked}
-                              handleTime={handleTime}
-                              oppositeValue={item.open}
-                            />
+                            <div className="w-full">
+                              <PickTime
+                                disabled={!item.checked}
+                                day={item.label}
+                                handleTime={handleTime}
+                                value={{
+                                  start: item.open ?? "8:00",
+                                  end: item.close ?? "17:00",
+                                }}
+                              />
+                            </div>
                           </div>
                         </div>
                       </div>

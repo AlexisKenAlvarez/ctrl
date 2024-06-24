@@ -580,6 +580,14 @@ export const labRouter = createTRPCRouter({
               .from("open_hours")
               .update({
                 open_time: hour.open,
+              })
+              .eq("testing_center", input.labId)
+              .eq("day", hour.label);
+          }
+          if (hour.close !== input.old_open_hours[index]?.close) {
+            await ctx.supabase
+              .from("open_hours")
+              .update({
                 close_time: hour.close,
               })
               .eq("testing_center", input.labId)
