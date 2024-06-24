@@ -258,6 +258,9 @@ const Signup = () => {
             router.refresh();
             console.log("Signup success");
           } catch (error) {
+            form.setError("email", {
+              message: "Email already exists."
+            })
             setDebounce(false);
             console.log(error);
           }
