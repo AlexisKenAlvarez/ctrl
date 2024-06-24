@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import TimeRangeSlider from "react-time-range-slider";
 
 import { to12Hours } from "@/utils/utils";
-import "react-clock/dist/Clock.css";
+import "../styles/ClockStyle.css"
 
 interface props {
   disabled: boolean;
